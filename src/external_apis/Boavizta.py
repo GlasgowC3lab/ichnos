@@ -1,7 +1,9 @@
 from src.utils.APIRequests import make_json_post_request, make_json_get_request
-from functools import cache
+from diskcache import Cache
 
-@cache
+cache = Cache('cache/boavizta_cache')
+
+@cache.memoize()
 def get_cpu_impact(cpu_name: str):
     """
     Retrieves the global warming potential (GWP) impact value of a CPU by its name.
@@ -16,7 +18,7 @@ def get_cpu_impact(cpu_name: str):
     url = "https://api.boavizta.org/v1/component/cpu?verbose=false"
     return make_json_post_request(url, {'name': cpu_name})['impacts']['gwp']['embedded']['value']
 
-@cache
+@cache.memoize()
 def get_aws_instance_impact(instance_type: str, duration: float = None):
     """
     Retrieves the global warming potential (GWP) impact value of an AWS instance type.

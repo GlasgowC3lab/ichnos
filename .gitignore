@@ -1,6 +1,7 @@
 # Python Files
 *__init__.py
 *__pycache__/
+cache
 
 # Project Specific Files
 *-marg*
