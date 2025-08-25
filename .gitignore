@@ -10,6 +10,9 @@ data/raw-traces/
 # Output Directory
 output/
 
+data/universal_traces/
+!data/universal_traces/test.csv
+
 data/trace
 !data/trace/test.csv
 
