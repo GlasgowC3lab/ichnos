@@ -11,7 +11,7 @@ data/raw-traces/
 output/
 
 data/universal_traces/
-!data/universal_traces/test.csv
+data/intensity_timeseries/
 
 data/trace
 !data/trace/test.csv
