@@ -204,23 +204,13 @@ def extract_tasks_by_interval(filename: str, interval: int) -> TaskExtractionRes
     """
     if len(filename.split(".")) > 1:
         filename = filename.split(".")[-2]
-    from src.utils.Parsers import parse_universal_trace_file, parse_trace_file  # local import to avoid cycles
+    from src.utils.Parsers import parse_universal_trace_file  # local import to avoid cycles
     trace_path_universal = f"data/universal_traces/{filename}.{FILE}"
     try:
         trace_records = parse_universal_trace_file(trace_path_universal)
-    except Exception:
-        # fallback to legacy trace format
-        try:
-            trace_records_legacy = parse_trace_file(f"data/trace/{filename}.{FILE}")
-            # convert legacy TraceRecord -> UniversalTrace via adapter; we rely on NFTracesToUniversal for batch conversion normally
-            from src.models.UniversalTrace import UniversalTrace as UT
-            converted: List[UT] = []
-            for tr in trace_records_legacy:
-                converted.append(UT(id=tr.task_id, name=tr._name, start=int(tr.start or 0), end=int(tr.complete or (tr.start or 0) + tr.realtime), cpu_count=tr.cpu_count, avg_cpu_usage=tr.cpu_percentage, cpu_model=tr.cpu_model or '', memory=tr.memory or 0.0))
-            trace_records = converted
-        except Exception as e2:
-            logging.error("Failed to parse any trace format for %s: %s", filename, e2)
-            trace_records = []
+    except Exception as e2:
+        logging.error("Failed to parse universal trace file %s: %s", trace_path_universal, e2)
+        trace_records = []
     return get_tasks_by_interval(trace_records, interval)
 
 def get_intervals(arr: List[int]) -> List[int]:

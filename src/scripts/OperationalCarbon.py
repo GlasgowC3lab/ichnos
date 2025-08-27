@@ -18,7 +18,7 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
     """
     Estimate the energy consumptions for a task.
     
-    :param task: CarbonRecord of the task.
+    :param task: UniversalTrace task record.
     :param model: Power model function.
     :param model_name: Name of the power model.
     :param memory_coefficient: Coefficient for memory power draw.
