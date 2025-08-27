@@ -2,7 +2,7 @@ import csv
 from dataclasses import dataclass
 from typing import List, Optional
 
-from models.UniversalTrace import UniversalTrace
+from src.models.UniversalTrace import UniversalTrace
 
 @dataclass
 class ProcessedTrace:

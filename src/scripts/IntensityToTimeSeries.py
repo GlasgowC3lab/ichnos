@@ -29,7 +29,7 @@ import argparse
 from datetime import datetime
 
 # Import TimeSeries
-from models.TimeSeries import TimeSeries  # PYTHONPATH should include src/
+from src.models.TimeSeries import TimeSeries  # PYTHONPATH should include src/
 
 INTENSITY_DIR = Path('data/intensity')
 OUTPUT_DIR = Path('data/intensity_timeseries')
@@ -118,12 +118,8 @@ def parse_intensity_file(path: Path) -> TimeSeries:
     return TimeSeries(period=period, start_timestamp=start_timestamp, values=values, ts_type=ts_type)
 
 
-def convert_all(force: bool = False, rename_existing: bool = False) -> List[ParsedSeries]:
+def convert_all(force: bool = False) -> List[ParsedSeries]:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    if rename_existing:
-        renamed = rename_existing_outputs()
-        if renamed:
-            print(f"[rename] adjusted {len(renamed)} existing file names")
     parsed: List[ParsedSeries] = []
     for path in sorted(INTENSITY_DIR.glob('*.csv')):
         try:
@@ -140,42 +136,9 @@ def convert_all(force: bool = False, rename_existing: bool = False) -> List[Pars
             print(f"[err] {path.name}: {e}")
     return parsed
 
-
-def rename_existing_outputs() -> List[Tuple[Path, Path]]:
-    """Rename legacy outputs to unified *_ci_* naming.
-
-    Patterns handled:
-      *_intensity_p -> *_ci_p
-      *_marg_intensity_p -> *_ci_p
-      *_marg_ci_p -> *_ci_p
-    Returns list of (old_path, new_path).
-    """
-    renamed: List[Tuple[Path, Path]] = []
-    patterns = [
-        ('_marg_intensity_', '_ci_'),
-        ('_intensity_', '_ci_'),
-        ('_marg_ci_', '_ci_'),
-    ]
-    for old in OUTPUT_DIR.glob('*.csv'):
-        for src, dst in patterns:
-            if src in old.name:
-                new_name = old.name.replace(src, dst)
-                new = old.with_name(new_name)
-                if new == old:
-                    continue
-                if new.exists():
-                    # If target exists, skip to avoid data loss.
-                    break
-                old.rename(new)
-                renamed.append((old, new))
-                break
-    return renamed
-
-
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--force', action='store_true', help='Overwrite existing outputs')
-    ap.add_argument('--rename-existing', action='store_true', help='Rename legacy *_intensity_* files to *_ci_* variant before converting')
     args = ap.parse_args()
     convert_all(force=args.force, rename_existing=args.rename_existing)
 

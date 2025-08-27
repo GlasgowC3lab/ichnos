@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Tuple
-from src.models.CarbonRecord import CarbonRecord
+from src.models.ProcessedTrace import ProcessedTrace
 
 @dataclass
 class OperationalCarbonResult:
@@ -13,4 +13,5 @@ class OperationalCarbonResult:
     memory_energy_pue: float
     carbon_emissions: float
     node_memory_usage: List[Tuple[float, float]]
-    records: List[CarbonRecord]
+    # List of processed trace (per interval or per original task instance)
+    records: List[ProcessedTrace]

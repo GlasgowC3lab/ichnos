@@ -7,7 +7,9 @@ detailed trace reports, and any other file-based outputs required by the project
 import os
 import logging
 from typing import Iterable, Any
-from src.models.CarbonRecord import HEADERS, CarbonRecord
+from src.models.CarbonRecord import HEADERS as LEGACY_HEADERS, CarbonRecord  # legacy
+from src.models.ProcessedTrace import ProcessedTrace
+from src.models.UniversalTrace import UniversalTrace
 
 def write_trace_file(folder: str, trace_file: str, records: Iterable[Any]) -> None:
     """
@@ -21,9 +23,27 @@ def write_trace_file(folder: str, trace_file: str, records: Iterable[Any]) -> No
     output_file_name = f"{folder}/{trace_file}-trace.csv"
     try:
         with open(output_file_name, "w") as file:
-            file.write(f"{HEADERS}\n")
-            for record in records:
-                file.write(f"{record}\n")
+            # Determine header & row writer based on record type
+            first = None
+            records = list(records)
+            if records:
+                first = records[0]
+            if isinstance(first, ProcessedTrace):
+                fns = ProcessedTrace.fieldnames()
+                file.write(','.join(fns) + '\n')
+                for r in records:
+                    row = ','.join(str(r.to_dict()[h]) for h in fns)
+                    file.write(row + '\n')
+            elif isinstance(first, UniversalTrace):
+                header = ','.join(UniversalTrace.fieldnames())
+                file.write(f"{header}\n")
+                for r in records:
+                    row = ','.join(str(r.to_dict()[h]) for h in UniversalTrace.fieldnames())
+                    file.write(row + "\n")
+            else:  # CarbonRecord fallback
+                file.write(f"{LEGACY_HEADERS}\n")
+                for record in records:
+                    file.write(f"{record}\n")
     except Exception as e:
         logging.error("Failed to write trace file %s: %s", output_file_name, e)
         raise
@@ -45,7 +65,7 @@ def write_summary_file(folder: str, trace_file: str, content: str) -> None:
         logging.error("Failed to write summary file %s: %s", output_file_name, e)
         raise
 
-def write_trace_and_detailed_report(folder: str, trace_file: str, records: Iterable[CarbonRecord], content: str) -> None:
+def write_trace_and_detailed_report(folder: str, trace_file: str, records: Iterable[CarbonRecord], content: str) -> None:  # legacy path
     """
     Write both detailed trace and summary reports.
     
@@ -57,16 +77,20 @@ def write_trace_and_detailed_report(folder: str, trace_file: str, records: Itera
     output_file_name = f"{folder}/{trace_file}-detailed-summary.txt"
     whole_tasks = {}
     for record in records:
-        curr_id = record.id
+        curr_id = getattr(record, 'id', getattr(getattr(record, 'universal', None), 'id', None))
+        if curr_id is None:
+            continue
         if curr_id in whole_tasks:
             present = whole_tasks[curr_id]
-            present.co2e += record.co2e
-            present.energy += record.energy
-            present.avg_ci = f'{present.avg_ci}|{record.avg_ci}'
-            present.realtime += record.realtime
+            # Only aggregate for legacy CarbonRecord
+            if isinstance(present, CarbonRecord) and isinstance(record, CarbonRecord):
+                if present.co2e is not None and record.co2e is not None:
+                    present.co2e += record.co2e
+                if present.energy is not None and record.energy is not None:
+                    present.energy += record.energy
         else:
             whole_tasks[curr_id] = record
-    records = whole_tasks.values()
+    records = list(whole_tasks.values())
     try:
         write_trace_file(folder, trace_file, records)
     except Exception as e:
@@ -106,16 +130,19 @@ def write_task_trace_and_rank_report(folder: str, trace_file: str, records: Iter
     technical_output_file_name = f"{folder}/{trace_file}-task-ranked.csv"
     whole_tasks = {}
     for record in records:
-        curr_id = record.id
+        curr_id = getattr(record, 'id', getattr(getattr(record, 'universal', None), 'id', None))
+        if curr_id is None:
+            continue
         if curr_id in whole_tasks:
             present = whole_tasks[curr_id]
-            present.co2e += record.co2e
-            present.energy += record.energy
-            present.avg_ci = f'{present.avg_ci}|{record.avg_ci}'
-            present.realtime += record.realtime
+            if isinstance(present, CarbonRecord) and isinstance(record, CarbonRecord):
+                if present.co2e is not None and record.co2e is not None:
+                    present.co2e += record.co2e
+                if present.energy is not None and record.energy is not None:
+                    present.energy += record.energy
         else:
             whole_tasks[curr_id] = record
-    records = whole_tasks.values()
+    records = list(whole_tasks.values())
     try:
         write_trace_file(folder, trace_file, records)
     except Exception as e:

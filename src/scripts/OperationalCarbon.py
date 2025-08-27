@@ -1,5 +1,6 @@
 from typing import Callable, Dict, List, Tuple, Union
-from src.models.CarbonRecord import CarbonRecord
+from src.models.UniversalTrace import UniversalTrace
+from src.models.ProcessedTrace import ProcessedTrace
 from src.models.TaskEnergyResult import TaskEnergyResult
 from src.models.OperationalCarbonResult import OperationalCarbonResult
 from src.utils.TimeUtils import to_timestamp, extract_tasks_by_interval
@@ -12,8 +13,8 @@ from datetime import datetime
 import sys
 import yaml
 
-# Estimate Energy Consumption
-def estimate_task_energy_consumption_ccf(task: CarbonRecord, model: Callable[[float], float], model_name: str, memory_coefficient: float, system_cores: int) -> TaskEnergyResult:
+# Estimate Energy Consumption (accept UniversalTrace)
+def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[float], float], model_name: str, memory_coefficient: float, system_cores: int) -> TaskEnergyResult:
     """
     Estimate the energy consumptions for a task.
     
@@ -28,13 +29,17 @@ def estimate_task_energy_consumption_ccf(task: CarbonRecord, model: Callable[[fl
         system_cores = 32
 
     # Time (h)
-    time_h: float = task.realtime / 1000 / 3600  # convert from ms to hours
+    time_h: float = (task.end - task.start) / 1000 / 3600  # convert from ms to hours
     # Number of Cores (int)
-    no_cores: int = task.core_count
+    no_cores: int = task.cpu_count
     # CPU Usage (%)
-    cpu_usage: float = task.cpu_usage / system_cores  # nextflow reports as overall utilisation
+    # avg_cpu_usage in UniversalTrace may be percent or fraction
+    cpu_usage_raw = task.avg_cpu_usage
+    if cpu_usage_raw > 1.0:
+        cpu_usage_raw = cpu_usage_raw / 100.0
+    cpu_usage: float = cpu_usage_raw  # already aggregated across allocated cores
     # Memory (GB)
-    memory: float = task.memory / 1073741824  # memory reported in bytes  https://www.nextflow.io/docs/latest/metrics.html 
+    memory: float = (task.memory or 0.0) / 1073741824  # memory reported in bytes 
     # Core Energy Consumption (without PUE)
     core_consumption: float = time_h * model(cpu_usage) * 0.001  # convert from W to kW
     if 'baseline' in model_name:
@@ -46,7 +51,7 @@ def estimate_task_energy_consumption_ccf(task: CarbonRecord, model: Callable[[fl
 
 
 # Estimate Carbon Footprint 
-def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[CarbonRecord]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, check_node_memory: bool = False) -> OperationalCarbonResult:
+def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[UniversalTrace]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, check_node_memory: bool = False) -> OperationalCarbonResult:
     """
     Calculate the carbon footprint using the CCF methodology.
     
@@ -63,7 +68,7 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
     total_memory_energy: float = 0.0
     total_memory_energy_pue: float = 0.0
     total_carbon_emissions: float = 0.0
-    records: List[CarbonRecord] = []
+    records: List[ProcessedTrace] = []
     node_memory_used: List[Tuple[float, float]] = []
     power_model = get_power_model(model_name)
     system_cores = get_system_cores(model_name)
@@ -84,7 +89,7 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
 
             if check_node_memory:
                 starts: List[int] = [int(task.start) for task in tasks]
-                ends: List[int] = [int(task.complete) for task in tasks]
+                ends: List[int] = [int(task.end) for task in tasks]
 
                 earliest: int = min(starts)
                 latest: int = max(ends)
@@ -93,19 +98,22 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
 
             for task in tasks:
                 energy_result = estimate_task_energy_consumption_ccf(task, power_model, model_name, memory_coefficient, system_cores)
-                energy, memory = energy_result.core_consumption, energy_result.memory_consumption
-                energy_pue: float = energy * pue
-                memory_pue: float = memory * pue
-                task_footprint: float = (energy_pue + memory_pue) * ci_val
-                task.energy = energy_pue
-                task.co2e = task_footprint
-                task.avg_ci = ci_val
-                total_energy += energy
-                total_energy_pue += energy_pue
-                total_memory_energy += memory
-                total_memory_energy_pue += memory_pue
+                energy_core, energy_mem = energy_result.core_consumption, energy_result.memory_consumption
+                energy_core_pue: float = energy_core * pue
+                energy_mem_pue: float = energy_mem * pue
+                task_footprint: float = (energy_core_pue + energy_mem_pue) * ci_val
+                total_energy += energy_core
+                total_energy_pue += energy_core_pue
+                total_memory_energy += energy_mem
+                total_memory_energy_pue += energy_mem_pue
                 total_carbon_emissions += task_footprint
-                records.append(task)
+                records.append(ProcessedTrace(
+                    universal=task,
+                    average_co2e=task_footprint,
+                    marginal_co2e=task_footprint,
+                    embodied_co2e=0.0,
+                    avg_ci=ci_val
+                ))
 
     return OperationalCarbonResult(
         cpu_energy=total_energy,

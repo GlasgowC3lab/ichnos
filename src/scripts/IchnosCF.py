@@ -1,12 +1,13 @@
 import logging
 from typing import Dict, List, Tuple, Union
 from src.utils.TimeUtils import to_timestamp, extract_tasks_by_interval
-from src.utils.Parsers import parse_ci_intervals, parse_arguments_with_config, parse_trace_file
+from src.utils.Parsers import parse_ci_intervals, parse_arguments_with_config, parse_universal_trace_file
 from src.utils.FileWriters import write_summary_file, write_task_trace_and_rank_report
 from src.utils.NodeConfigModelReader import get_cpu_model
 from src.Constants import *
 from src.scripts.OperationalCarbon import calculate_carbon_footprint_ccf
-from src.scripts.EmbodiedCarbon import embodied_carbon_for_trace_records
+from src.scripts.EmbodiedCarbon import calculate_cpu_embodied_carbon
+from src.models.UniversalTrace import UniversalTrace
 from src.models.IchnosResult import IchnosResult
 from src.models.OperationalCarbonResult import OperationalCarbonResult
 from src.models.TaskExtractionResult import TaskExtractionResult
@@ -35,15 +36,15 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     task_extraction_result: TaskExtractionResult = extract_tasks_by_interval(workflow, interval)
     tasks_by_interval = task_extraction_result.tasks_by_interval
 
-    ## Get raw TraceRecords for computing embodied carbon
+    ## Get raw UniversalTrace records for computing embodied carbon
     filename: str = workflow
     if len(filename.split(".")) > 1:
         filename = filename.split(".")[-2]
     try:
-        trace_records = parse_trace_file(f"data/trace/{filename}.{FILE}")
+        trace_records: List[UniversalTrace] = parse_universal_trace_file(f"data/universal_traces/{filename}.{FILE}")
     except Exception as e:
-        logging.error("Failed to parse trace file %s: %s", f"data/trace/{filename}.{FILE}", e)
-        raise
+        logging.error("Failed to parse universal trace file %s: %s", f"data/universal_traces/{filename}.{FILE}", e)
+        trace_records = []
     #################
 
     # for curr_interval, records_list in tasks_by_interval.items():
@@ -76,7 +77,12 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     records_res = op_carbon_result.records
 
     fallback_cpu_model: str = get_cpu_model(model_name)
-    emb_carbon_emissions = embodied_carbon_for_trace_records(trace_records, use_cpu_usage=False, fallback_cpu_model=fallback_cpu_model)
+    # Compute embodied carbon directly from UniversalTrace list (per-task allocation)
+    emb_carbon_emissions = 0.0
+    for ut in trace_records:
+        cpu_model = ut.cpu_model if (ut.cpu_model and ut.cpu_model != 'None') else fallback_cpu_model
+        duration_h = max(0.0, (ut.end - ut.start)) / 1000 / 3600
+        emb_carbon_emissions += calculate_cpu_embodied_carbon(cpu_model, duration_h, cpu_usage=1.0)
     total_carbon_emissions = op_carbon_emissions + emb_carbon_emissions
 
     summary += "\nCloud Carbon Footprint Method:\n"
