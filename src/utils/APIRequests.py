@@ -11,9 +11,10 @@ def make_json_post_request(url: str, payload: dict):
 	else:
 		raise Exception(f"Request failed with status code {response.status_code}: {response.text}")
 
-def make_json_get_request(url: str):
+def make_json_get_request(url: str, my_api_key: str = ""):
 	headers = {
 		"accept": "application/json",
+		"auth-token": my_api_key
 	}
 	response = requests.get(url, headers=headers)
 	if response.status_code == 200:

@@ -51,7 +51,7 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
 
 
 # Estimate Carbon Footprint 
-def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[UniversalTrace]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, check_node_memory: bool = False) -> OperationalCarbonResult:
+def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[UniversalTrace]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, check_node_memory: bool = False, ewif: Union[float, Dict[str, float]]= None, wue: float = None, elif_: Union[float, Dict[str, float]] = None, lue: float = None ) -> OperationalCarbonResult:
     """
     Calculate the carbon footprint using the CCF methodology.
     
@@ -63,11 +63,23 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
     :param check_node_memory: Flag to check reserved memory.
     :return: Tuple containing aggregated metrics and a list of processed tasks.
     """
+    # Ensure wue and ewif are both provided together or both None
+    if (wue is None) != (ewif is None):
+        raise ValueError("Both wue and ewif must be provided together.")
+    # Ensure lue and elif_ are both provided together or both None
+    if (lue is None) != (elif_ is None):
+        raise ValueError("Both lue and elif_ must be provided together.")
+
+
     total_energy: float = 0.0
     total_energy_pue: float = 0.0
     total_memory_energy: float = 0.0
     total_memory_energy_pue: float = 0.0
     total_carbon_emissions: float = 0.0
+    # adding water and land use footprint when available
+    total_water_emissions: float = 0.0 if (wue and ewif) else None
+    total_land_emissions: float = 0.0 if (lue and elif_) else None
+
     records: List[ProcessedTrace] = []
     node_memory_used: List[Tuple[float, float]] = []
     power_model = get_power_model(model_name)
@@ -76,16 +88,42 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
 
     for group_interval, tasks in tasks_grouped_by_interval.items():
         if tasks:
+            # determine the intensity key
+            hour_ts = to_timestamp(group_interval)
+            hh: str = str(hour_ts.hour).zfill(2)
+            month: str = str(hour_ts.month).zfill(2)
+            day: str = str(hour_ts.day).zfill(2)
+            mm: str = str(hour_ts.minute).zfill(2)
+            intensity_key: str = f'{month}/{day}-{hh}:{mm}'
+
+            # fetching ci value
             if isinstance(ci, float):
                 ci_val: float = ci
             else:
-                hour_ts = to_timestamp(group_interval)
-                hh: str = str(hour_ts.hour).zfill(2)
-                month: str = str(hour_ts.month).zfill(2)
-                day: str = str(hour_ts.day).zfill(2)
-                mm: str = str(hour_ts.minute).zfill(2)
-                ci_key: str = f'{month}/{day}-{hh}:{mm}'
-                ci_val = ci[ci_key] 
+                #hour_ts = to_timestamp(group_interval)
+                #hh: str = str(hour_ts.hour).zfill(2)
+                #month: str = str(hour_ts.month).zfill(2)
+                #day: str = str(hour_ts.day).zfill(2)
+                #mm: str = str(hour_ts.minute).zfill(2)
+                #ci_key: str = f'{month}/{day}-{hh}:{mm}'
+                ci_val = ci[intensity_key] 
+            
+            ###################
+            # fetching ewif value
+            ewif_val = None
+            if ewif and isinstance(ewif, float):
+                ewif_val: float = ewif
+            else:
+                ewif_val = ewif[intensity_key]
+
+            # fetching elif value
+            elif_val = None
+            if elif_ and isinstance(elif_, float):
+                elif_val: float = elif_
+            else:
+                elif_val = elif_[intensity_key]
+            ###################
+            
 
             if check_node_memory:
                 starts: List[int] = [int(task.start) for task in tasks]
@@ -107,12 +145,30 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
                 total_memory_energy += energy_mem
                 total_memory_energy_pue += energy_mem_pue
                 total_carbon_emissions += task_footprint
+
+                ###################
+                # adding water footprint when available
+                task_water_footprint = None
+                if wue and ewif:
+                    task_water_footprint: float = (energy_core_pue + energy_mem_pue) * (wue + ewif_val) # kWh * (L/kWh) = L
+                    total_water_emissions += task_water_footprint
+                # adding land use footprint when available
+                task_land_footprint = None
+                if lue and elif_:
+                    task_land_footprint: float = (energy_core_pue + energy_mem_pue) * (lue + elif_val) # kWh * (m2/kWh) = m2
+                    total_land_emissions += task_land_footprint
+                ###################
+
                 records.append(ProcessedTrace(
                     universal=task,
                     average_co2e=task_footprint,
                     marginal_co2e=task_footprint,
+                    average_water=task_water_footprint, # in Liters
+                    average_land=task_land_footprint, # in square meters
                     embodied_co2e=0.0,
-                    avg_ci=ci_val
+                    avg_ci=ci_val, 
+                    avg_ewif=ewif_val,
+                    avg_elif=elif_val,
                 ))
 
     return OperationalCarbonResult(
@@ -120,7 +176,9 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
         cpu_energy_pue=total_energy_pue,
         memory_energy=total_memory_energy,
         memory_energy_pue=total_memory_energy_pue,
-        carbon_emissions=total_carbon_emissions,
+        carbon_emissions=total_carbon_emissions, 
+        water_emissions=total_water_emissions, # in Liters
+        land_emissions=total_land_emissions, # in square meters
         node_memory_usage=node_memory_used,
         records=records
     )

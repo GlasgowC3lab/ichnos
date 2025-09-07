@@ -65,6 +65,26 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
         ci_filename: str = f"data/intensity/{arguments[CI]}.{FILE}"
         ci = parse_ci_intervals(ci_filename)
 
+    ###################
+    # Water footprint input parameters
+    wue = arguments[WUE] if WUE in arguments else None
+    if wue and arguments[EWIF]:
+        if isinstance(arguments[EWIF], float):
+            ewif = arguments[EWIF]
+        else:
+            ewif_filename: str = f"data/intensity/{arguments[EWIF]}.{FILE}"
+            ewif = parse_ci_intervals(ewif_filename)
+    # Land use footprint input parameters
+    lue = arguments[LUE] if LUE in arguments else None
+    if lue and arguments[ELIF]:
+        if isinstance(arguments[ELIF], float):
+            elif_ = arguments[ELIF]
+        else:
+            elif_filename: str = f"data/intensity/{arguments[ELIF]}.{FILE}"
+            elif_ = parse_ci_intervals(elif_filename)
+    ###################
+
+
     check_reserved_memory_flag: bool = RESERVED_MEMORY in arguments
 
     op_carbon_result = calculate_carbon_footprint_ccf(tasks_by_interval, ci, pue, model_name, memory_coefficient, check_reserved_memory_flag)
