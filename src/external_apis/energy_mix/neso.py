@@ -4,7 +4,11 @@ from datetime import datetime
 def cast(generationmix):
     mix = {}
     for entry in generationmix:
-        mix[entry["fuel"].lower()] = entry["perc"] / 100
+        source = entry["fuel"].lower()
+        if entry["fuel"].lower() == "other":
+            source = "unknown"
+        mix[source] = entry["perc"] / 100
+
     return mix
 
 def get_energy_mix_last():

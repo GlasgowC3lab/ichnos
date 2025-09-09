@@ -1,0 +1,28 @@
+This document is to provide an overview of the features of water and land use footprints as contributions to the Ichnos project.
+
+Firstly, let us define water and land footprints. Both footprints can be broken down into two components: the onsite and offsite footprint. The onsite footprint is the water or land use associated with the operation of the data center, while the offsite footprint is the water or land use associated with the generation of the electricity used by the data center.
+The onsite water use effectiveness (WUE) is defined as the amount of water used by the data center per unit of energy consumed, typically expressed in liters per kilowatt-hour (L/kWh). 
+The offsite water use intensity factor (EWIF) is defined as the amount of water used in the generation of electricity per unit of energy produced, typically expressed in liters per kilowatt-hour (L/kWh). This value is dependent on the energy mix of the electricity grid supplying the data center.
+Similarly, we define the onsite land use effectiveness (LUE) as the amount of land used by the data center per unit of energy consumed, expressed in square meters per kilowatt-hour (m²/kWh).
+The offsite land use intensity factor (ELIF) is defined as the amount of land used in the generation of electricity per unit of energy produced, typically expressed in square meters per kilowatt-hour (m²/kWh). This value is also dependent on the energy mix of the electricity grid supplying the data center.
+
+WUE and LUE can be obtained from the data center operator or estimated, while EWIF and ELIF can be obtained from the energy mix of the electricity grid supplying the data center.
+
+For this project, we consider WUE and LUE as input parameters that can be provided by the user. On the other hand, EWIF and ELIF can be computed with our model starting from the energy mix of the electricity grid supplying the data center.
+Using ichnos, it is possible to:
+    - download the energy mix of a specific region and time period from different external APIs (e.g., Electricity Maps, NESO). We consider the following sources for the energy mix: wind, solar, hydro, geothermal, biomass, nuclear, coal, gas, oil, and unknown.
+    Note that not all APIs provide the same level of detail in the energy mix data. Here are the differences between Electricity maps and NESO:
+        - Electricity Maps provides data on the energy mix of a specific region. The granularity of the data is 1 hour. It is possible to access the last hour, the last 24 hours. Respectively, from src.external_apis.energy_mix.electricity_maps the functions get_energy_mix_last, and get_energy_mix_pt24.
+        We consider the "powerConsumptionBreakdown" field of the output received by electricity maps APIs and we count "hydro discharge", "battery discharge", and "unknown" fields as "unknown" source. Also, data from Electricity Maps is provided in MW; thus, we compute the percentages in 0-1 to represent the mix as sources' shares.
+        - NESO provides data on the UK energy mix. The granularity of the data is 30 minutes. It is possible to access the last half hour, the 24 hours previous to a given timestamp, or a specific range of time. Respectively, from src.external_apis.energy_mix.neso the functions get_energy_mix_last, get_energy_mix_pt24, and get_energy_mix. NESO api provides data in percentage in 0-100\%; thus, we normalize them in 0-1, and we count the "other" field as "unknown" source.
+    - compute the EWIF and ELIF from the energy mix data using the source intensity factors provided in src.external_apis.energy_mix.energy_mix_record (dataclass WaterIntensityFactors and dataclass LandUseIntensityFactors). Intensity factors are taken from the following sources:
+        - Water intensity factors are taken from https://www.nrel.gov/docs/fy11osti/50900.pdf considering the median column from table 1 and 2 (water consumption). When multiple values are provided for a source due to technology differences, we take the mean value.
+        - Land use intensity factors are taken from https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0270155. Note that this survey does not provide a ELIF value for oil, but the authors assume it to be comparable to gas.
+
+Refer to the code in src.external_apis.energy_mix.interface to see how to use the different APIs to download the energy mix data and compute the EWIF and ELIF.
+
+Finally, the water and land use footprints are computed in src.scripts.OperationalCarbon, where the water and land use footprints are added to the OperationalCarbonReport class. The water and land use footprints are computed for each task and then summed up to obtain the total water and land use footprints for the entire job. 
+For each task, the water and land use footprints are computed as follows:
+    - Onsite footprint = (energy_core_pue + energy_mem_pue) * WUE (for water) or LUE (for land)
+    - Offsite footprint = (energy_core + energy_mem) * EWIF (for water) or ELIF (for land)
+    - Total footprint = Onsite footprint + Offsite footprint

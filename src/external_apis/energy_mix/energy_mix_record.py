@@ -85,7 +85,7 @@ class EnergyMixRecord:
         self.coal = float(mix.get("coal", 0.0))
         self.gas = float(mix.get("gas", 0.0))
         self.oil = float(mix.get("oil", 0.0))
-        self.unknown = float(mix.get("other", 0.0))
+        self.unknown = float(mix.get("unknown", 0.0))
 
         self.ci_factors = CarbonIntensityFactors()
         self.ewif_factors = WaterIntensityFactors()
