@@ -37,7 +37,7 @@ def format_data(data: list, factors: list):
         factor: intensities[factor] for factor in factors
     }
 
-def store_intensity_data(to_store: dict, path="data/intensity"):
+def store_intensity_data(to_store: dict, path="data/intensity", suffix=""):
     # 3) store them in a local cache (a file)
     import os
     if not os.path.exists(path):
@@ -54,7 +54,7 @@ def store_intensity_data(to_store: dict, path="data/intensity"):
             filename = "elif.csv"
         else:
             continue
-        with open(f"{path}/{filename}", "w") as f:
+        with open(f"{path}/{suffix}{filename}", "w") as f:
             f.write(data)
 
 
@@ -63,11 +63,12 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Fetch energy mix data from external APIs")
     parser.add_argument('--api', type=str, choices=['neso', 'electricity_maps'], required=True, help='The API to fetch data from')
-    parser.add_argument('--factors', nargs='+', type=str, help='The intensity factors to compute', default=['mix', 'ci', 'ewif', 'elif'])
+    parser.add_argument('--factors', nargs='+', type=str, help='The intensity factors to compute', default=['ewif', 'elif'], choices=['mix', 'ci', 'ewif', 'elif'])
     parser.add_argument('--mode', type=str, choices=['last', '24h', 'range'], required=True, help='The mode of data fetching')
     parser.add_argument('--zone', type=str, help='The zone for electricity_maps API')
     parser.add_argument('--from_time', type=str, help='The start time for neso range or 24h mode (format: YYYY-MM-DDTHH:MMZ)')
     parser.add_argument('--to_time', type=str, help='The end time for range mode (format: YYYY-MM-DDTHH:MMZ)')
+    parser.add_argument('--output_suffix', type=str, help='The output suffix for the files', default='')
     args = parser.parse_args()
 
     if args.api == 'neso':
@@ -98,7 +99,7 @@ if __name__ == "__main__":
 
     intensities = format_data(data, args.factors)
     print(intensities.keys())
-    store_intensity_data(intensities, "data/intensity")
+    store_intensity_data(intensities, "data/intensity", args.output_suffix)
 
 
 # Example usage:
