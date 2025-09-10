@@ -68,6 +68,7 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     ###################
     # Water footprint input parameters
     wue = arguments[WUE] if WUE in arguments else None
+    ewif = None
     if wue and arguments[EWIF]:
         if isinstance(arguments[EWIF], float):
             ewif = arguments[EWIF]
@@ -76,6 +77,7 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
             ewif = parse_ci_intervals(ewif_filename)
     # Land use footprint input parameters
     lue = arguments[LUE] if LUE in arguments else None
+    elif_ = None
     if lue and arguments[ELIF]:
         if isinstance(arguments[ELIF], float):
             elif_ = arguments[ELIF]
