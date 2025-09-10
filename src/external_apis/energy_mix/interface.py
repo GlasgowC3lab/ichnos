@@ -102,4 +102,5 @@ if __name__ == "__main__":
 
 
 # Example usage:
-# python -m src.external_apis.energy_mix.interface --api electricity_maps --mode 24h --factors mix ci ewif elif --zone UK
+# python -m src.external_apis.energy_mix.interface --api neso --mode range --from_time 2023-11-15T00:00Z --to_time 2023-12-08T23:00Z --factors mix ci ewif elif 
+

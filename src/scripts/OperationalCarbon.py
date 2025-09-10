@@ -69,8 +69,6 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
     # Ensure lue and elif_ are both provided together or both None
     if (lue is None) != (elif_ is None):
         raise ValueError("Both lue and elif_ must be provided together.")
-
-
     total_energy: float = 0.0
     total_energy_pue: float = 0.0
     total_memory_energy: float = 0.0
@@ -110,20 +108,22 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
             
             ###################
             # fetching ewif value
+            
             ewif_val = None
-            if ewif and isinstance(ewif, float):
-                ewif_val: float = ewif
-            else:
-                ewif_val = ewif[intensity_key]
+            if ewif:
+                if isinstance(ewif, float):
+                    ewif_val: float = ewif
+                else:
+                    ewif_val = ewif[intensity_key]
 
             # fetching elif value
             elif_val = None
-            if elif_ and isinstance(elif_, float):
-                elif_val: float = elif_
-            else:
-                elif_val = elif_[intensity_key]
+            if elif_ :
+                if isinstance(elif_, float):
+                    elif_val: float = elif_
+                else:
+                    elif_val = elif_[intensity_key]
             ###################
-            
 
             if check_node_memory:
                 starts: List[int] = [int(task.start) for task in tasks]
@@ -167,11 +167,11 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
                     universal=task,
                     average_co2e=task_footprint,
                     marginal_co2e=task_footprint,
-                    average_water=task_water_footprint, # in Liters
-                    average_land=task_land_footprint, # in square meters
                     embodied_co2e=0.0,
                     avg_ci=ci_val, 
+                    average_water=task_water_footprint, # in Liters
                     avg_ewif=ewif_val,
+                    average_land=task_land_footprint, # in square meters
                     avg_elif=elif_val,
                 ))
 
