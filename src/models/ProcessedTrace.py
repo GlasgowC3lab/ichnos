@@ -23,7 +23,14 @@ class ProcessedTrace:
     marginal_co2e: float
     embodied_co2e: float
     avg_ci: float
+    
+    average_water: float # in Liters
+    avg_ewif: float
+    average_land: float # in square meters
+    avg_elif: float
+
     ci_timeseries: Optional[str] = None # filename of carbon intensity time series used (optional)
+
 
     def to_dict(self) -> dict:
         u = self.universal

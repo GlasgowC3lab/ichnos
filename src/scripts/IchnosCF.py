@@ -65,9 +65,45 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
         ci_filename: str = f"data/intensity/{arguments[CI]}.{FILE}"
         ci = parse_ci_intervals(ci_filename)
 
+    ###################
+    # Water footprint input parameters
+    wue = arguments[WUE] if WUE in arguments else None
+    ewif = None
+    if wue and arguments[EWIF]:
+        if isinstance(arguments[EWIF], float):
+            ewif = arguments[EWIF]
+        else:
+            ewif_filename: str = f"data/intensity/{arguments[EWIF]}.{FILE}"
+            ewif = parse_ci_intervals(ewif_filename)
+    # Land use footprint input parameters
+    lue = arguments[LUE] if LUE in arguments else None
+    elif_ = None
+    if lue and arguments[ELIF]:
+        if isinstance(arguments[ELIF], float):
+            elif_ = arguments[ELIF]
+        else:
+            elif_filename: str = f"data/intensity/{arguments[ELIF]}.{FILE}"
+            elif_ = parse_ci_intervals(elif_filename)
+
+    ###################
+
+
     check_reserved_memory_flag: bool = RESERVED_MEMORY in arguments
 
-    op_carbon_result = calculate_carbon_footprint_ccf(tasks_by_interval, ci, pue, model_name, memory_coefficient, check_reserved_memory_flag)
+    #op_carbon_result = calculate_carbon_footprint_ccf(tasks_by_interval, ci, pue, model_name, memory_coefficient, check_reserved_memory_flag, wue, ewif, lue, elif_)
+
+    op_carbon_result = calculate_carbon_footprint_ccf(
+        tasks_grouped_by_interval=tasks_by_interval, 
+        ci=ci, 
+        pue=pue, 
+        model_name=model_name, 
+        memory_coefficient=memory_coefficient, 
+        check_node_memory=check_reserved_memory_flag, 
+        ewif=ewif, 
+        wue=wue, 
+        elif_=elif_, 
+        lue=lue
+    )
     cpu_energy = op_carbon_result.cpu_energy
     cpu_energy_pue = op_carbon_result.cpu_energy_pue
     mem_energy = op_carbon_result.memory_energy
@@ -75,6 +111,9 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     op_carbon_emissions = op_carbon_result.carbon_emissions
     node_memory_usage = op_carbon_result.node_memory_usage
     records_res = op_carbon_result.records
+
+    op_water_emissions = op_carbon_result.water_emissions
+    op_land_emissions = op_carbon_result.land_emissions
 
     fallback_cpu_model: str = get_cpu_model(model_name)
     # Compute embodied carbon directly from UniversalTrace list (per-task allocation)
@@ -94,9 +133,19 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     summary += f"- Embodied Carbon Emissions: {emb_carbon_emissions}gCO2e\n"
     summary += f"- Total Carbon Emissions: {total_carbon_emissions}gCO2e\n"
 
+    
+
     print(f"Operational Carbon Emissions: {op_carbon_emissions}gCO2e")
     print(f"Embodied Carbon Emissions: {emb_carbon_emissions}gCO2e")
     print(f"Total Carbon Emissions: {total_carbon_emissions}gCO2e")
+
+    if wue:
+        summary += f"- Total Water Footprint: {op_water_emissions}\n"
+        print(f"Total Water Footprint: {op_water_emissions} Liters")
+
+    if lue:
+        summary += f"- Total Land Use Footprint: {op_land_emissions}\n"
+        print(f"Total Land Use Footprint: {op_land_emissions} square meters")
     
     if check_reserved_memory_flag:
         total_res_mem_energy: float = 0.0
