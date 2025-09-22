@@ -150,14 +150,14 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
                 # adding water footprint when available
                 task_water_footprint = None
                 if wue and ewif:
-                    task_water_footprint_onsite: float = (energy_core_pue + energy_mem_pue) * wue # kWh * (L/kWh) = L
-                    task_water_footprint_offsite: float = (energy_core + energy_mem) * ewif_val # kWh * (L/kWh) = L
+                    task_water_footprint_onsite: float = (energy_core + energy_mem) * wue # kWh * (L/kWh) = L
+                    task_water_footprint_offsite: float = (energy_core_pue + energy_mem_pue) * ewif_val # kWh * (L/kWh) = L
                     task_water_footprint: float = task_water_footprint_onsite + task_water_footprint_offsite # kWh * (L/kWh) = L
                     total_water_emissions += task_water_footprint
                 # adding land use footprint when available
                 task_land_footprint = None
                 if lue and elif_:
-                    task_land_footprint_onsite: float = (energy_core_pue + energy_mem_pue) * lue  # kWh * (m2/kWh) = m2
+                    task_land_footprint_onsite: float = (energy_core + energy_mem) * lue  # kWh * (m2/kWh) = m2
                     task_land_footprint_offsite: float = (energy_core_pue + energy_mem_pue) * elif_val # kWh * (m2/kWh) = m2
                     task_land_footprint: float = task_land_footprint_onsite + task_land_footprint_offsite # kWh * (m2/kWh) = m2
                     total_land_emissions += task_land_footprint
