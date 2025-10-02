@@ -1,5 +1,5 @@
 
-from src.external_apis.energy_mix.energy_mix_record import EnergyMixRecord
+from src.models.EnergyMixRecord import EnergyMixRecord
 
 def fetch_data(func, *args, **kwargs):
     data = func(*args, **kwargs)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.api == 'neso':
-        from src.external_apis.energy_mix.neso import get_energy_mix_last, get_energy_mix_pt24, get_energy_mix 
+        from src.external_apis.NESO import get_energy_mix_last, get_energy_mix_pt24, get_energy_mix 
         if args.mode == 'last':
             data = fetch_data(get_energy_mix_last)
         elif args.mode == '24h':
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         else:
             raise ValueError("Invalid mode for neso API")
     elif args.api == 'electricity_maps':
-        from src.external_apis.energy_mix.electricity_maps import get_energy_mix_last, get_energy_mix_pt24
+        from src.external_apis.ElectrictyMaps import get_energy_mix_last, get_energy_mix_pt24
         if not args.zone:
             raise ValueError("zone is required for electricity_maps API")
         if args.mode == 'last':
@@ -103,5 +103,5 @@ if __name__ == "__main__":
 
 
 # Example usage:
-# python -m src.external_apis.energy_mix.interface --api neso --mode range --from_time 2023-11-15T00:00Z --to_time 2023-12-08T23:00Z --factors mix ci ewif elif 
+# python -m src.scripts.FetchEnergyMix --api neso --mode range --from_time 2023-11-15T00:00Z --to_time 2023-12-08T23:00Z --factors mix ci ewif elif 
 
