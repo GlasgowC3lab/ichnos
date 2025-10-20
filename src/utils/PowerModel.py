@@ -27,7 +27,7 @@ def get_power_model(model_name: str) -> Any:
             return MathModels.min_max_linear_power_model(min_watts, max_watts)
         elif model_type == 'baseline':
             tdp_per_core = models[node_id][governor]['tdp_per_core']
-            return MathModels.baseline_power_model(tdp_per_core)
+            return float(tdp_per_core)
         elif model_type == 'linear':
             linear_vals = models[node_id][governor]['linear']
             coeff = linear_vals[0]
