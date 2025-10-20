@@ -37,8 +37,8 @@ def estimate_task_energy_consumption_ccf(task: CarbonRecord, model: Callable[[fl
     memory: float = task.memory / 1073741824  # memory reported in bytes  https://www.nextflow.io/docs/latest/metrics.html 
     if 'baseline' in model_name:
         # model = baseline, model = TDP
-        core_consumption: float = time_h * ((task.cpu_usage / 100) * model) * 0.001 
-# https://github.com/nextflow-io/nf-co2footprint/blob/master/src/main/nextflow/co2footprint/CO2FootprintComputer.groovy
+        # https://github.com/nextflow-io/nf-co2footprint/blob/master/src/main/nextflow/co2footprint/CO2FootprintComputer.groovy
+        core_consumption: float = time_h * model(task.cpu_usage) * 0.001 
     else:
         # Core Energy Consumption (without PUE)
         core_consumption: float = time_h * model(cpu_usage) * 0.001  # convert from W to kW
