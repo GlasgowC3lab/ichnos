@@ -100,7 +100,7 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
                 energy_pue: float = energy * pue
                 memory_pue: float = memory * pue
                 task_footprint: float = (energy_pue + memory_pue) * ci_val
-                task.energy = energy_pue
+                task.energy = energy_pue + memory_pue
                 task.co2e = task_footprint
                 task.avg_ci = ci_val
                 total_energy += energy
