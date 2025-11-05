@@ -31,7 +31,7 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
     # Time (h)
     time_h: float = (task.end - task.start) / 1000 / 3600  # convert from ms to hours
     # Number of Cores (int)
-    no_cores: int = task.cpu_count
+    no_cores: int = task.cpu_count # TODO: we need to revise the use of cpu_count vs system_cores
     # CPU Usage (%)
     cpu_usage: float = task.avg_cpu_usage / system_cores  # nextflow reports as overall utilisation
     # Memory (GB)
@@ -39,7 +39,9 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
     # Core Energy Consumption (without PUE)
     core_consumption: float = time_h * model(cpu_usage) * 0.001  # convert from W to kW
     if 'baseline' in model_name:
-        core_consumption *= no_cores
+        # model = baseline, model = TDP
+        # https://github.com/nextflow-io/nf-co2footprint/blob/master/src/main/nextflow/co2footprint/CO2FootprintComputer.groovy
+        core_consumption: float = time_h * model(task.cpu_usage) * 0.001 
     # Memory Power Consumption (without PUE)
     memory_consumption: float = memory * memory_coefficient * time_h * 0.001  # convert from W to kW
     # Overall and Memory Consumption (kWh) (without PUE)
