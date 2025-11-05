@@ -33,11 +33,7 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
     # Number of Cores (int)
     no_cores: int = task.cpu_count
     # CPU Usage (%)
-    # avg_cpu_usage in UniversalTrace may be percent or fraction
-    cpu_usage_raw = task.avg_cpu_usage
-    if cpu_usage_raw > 1.0:
-        cpu_usage_raw = cpu_usage_raw / 100.0
-    cpu_usage: float = cpu_usage_raw  # already aggregated across allocated cores
+    cpu_usage: float = task.avg_cpu_usage / system_cores  # nextflow reports as overall utilisation
     # Memory (GB)
     memory: float = (task.memory or 0.0) / 1073741824  # memory reported in bytes 
     # Core Energy Consumption (without PUE)
