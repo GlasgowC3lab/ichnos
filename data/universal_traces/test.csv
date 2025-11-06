@@ -1,0 +1,5 @@
+id,name,start,end,cpu_count,avg_cpu_usage,cpu_model,memory,rapl_timeseries,cpu_usage_timeseries
+2,fastqc,1710342943017,1710342962548,4,107.5,13th Gen Intel(R) Core(TM) i7-13700,4294967296.0,,
+4,fastqc,1710342943015,1710342962676,4,111.7,13th Gen Intel(R) Core(TM) i7-13700,4294967296.0,,
+3,fastqc,1710342943016,1710342962851,4,106.3,13th Gen Intel(R) Core(TM) i7-13700,4294967296.0,,
+1,fastqc,1710342962648,1710342965542,4,150.9,13th Gen Intel(R) Core(TM) i7-13700,4294967296.0,,

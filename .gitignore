@@ -15,7 +15,15 @@ data/trace
 data/intensity
 !data/intensity/ci.csv
 
+data/intensity_timeseries/
+
+data/universal_traces/
+!data/universal_traces/test.csv
+
 # Evaluation scripts
 eval_scripts/
+
+cache/
+
 
 .DS_Store
