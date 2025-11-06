@@ -117,7 +117,7 @@
 			"cpu_model": "AMD EPYC 7282"
 		}
 	},
-	"hu26": {
+	"hu-worker-c26": {
 		"default": {
 			"tdp_per_core": 8.4375,
 			"system_cores": 32,
@@ -144,6 +144,78 @@
 			"max_watts": 139.26666666666668,
 			"cpu_model": "Intel Xeon Silver 4314"
         }
+	},
+	"hu-worker-c40": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.08331380208333335,
+			"linear": [ 0.9035939393939393, 70.3309090909091 ],
+			"min_watts": 43.169999999999995,
+			"max_watts": 142.41666666666666,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
+	},
+	"hu-worker-c42": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.08854817708333333,
+			"linear": [ 0.9256333333333333, 66.84681818181818 ],
+			"min_watts": 43.04,
+			"max_watts": 140.84666666666666,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
+	},
+	"hu-worker-c44": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.08510416666666669,
+			"linear": [ 0.8908636363636366, 69.35075757575758 ],
+			"min_watts": 44.21333333333333,
+			"max_watts": 141.59333333333333,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
+	},
+	"hu-worker-c45": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.09011718750000001,
+			"linear": [ 0.8816999999999998, 71.15863636363639 ],
+			"min_watts": 45.25333333333333,
+			"max_watts": 141.83333333333334,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
+	},
+	"hu-worker-c37": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.08331380208333335,
+			"linear": [ 0.9035939393939393, 70.3309090909091 ],
+			"min_watts": 43.169999999999995,
+			"max_watts": 142.41666666666666,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
+	},
+	"hu-worker-c38": {
+		"schedutil": {
+			"tdp_per_core": 8.4375,
+			"system_cores": 32,
+			"mem_draw": 0.08331380208333335,
+			"linear": [ 0.9035939393939393, 70.3309090909091 ],
+			"min_watts": 43.169999999999995,
+			"max_watts": 142.41666666666666,
+			"cpu_model": "Intel Xeon Silver 4314"
+		},
+		"memory": 256
 	},
 	"gcpc2": {
 		"default": {

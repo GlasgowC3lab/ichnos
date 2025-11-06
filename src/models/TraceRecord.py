@@ -34,6 +34,7 @@ class TraceRecord:
         self._process = self._raw['process']
         self._realtime = self._raw['realtime']
         self._submit = self._raw['submit']
+        self._hostname = self._raw.get('hostname')
 
     def get_raw_data_map(self, fields: str, data: str, delimiter: str) -> dict:
         """
@@ -81,7 +82,8 @@ class TraceRecord:
             cpu_usage=self._cpu_usage, 
             cpu_model=self._cpu_model, 
             memory=self._memory, 
-            name=self._name
+            name=self._name,
+            hostname=self._hostname
         )
 
     @property
@@ -138,6 +140,10 @@ class TraceRecord:
     @property
     def submit(self):
         return self._submit
+
+    @property
+    def hostname(self):
+        return self._hostname
 
     @property
     def complete(self):

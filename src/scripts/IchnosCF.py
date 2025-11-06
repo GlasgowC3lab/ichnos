@@ -3,7 +3,7 @@ from typing import Dict, List, Tuple, Union
 from src.utils.TimeUtils import to_timestamp, extract_tasks_by_interval
 from src.utils.Parsers import parse_ci_intervals, parse_arguments_with_config, parse_trace_file
 from src.utils.FileWriters import write_summary_file, write_task_trace_and_rank_report
-from src.utils.NodeConfigModelReader import get_cpu_model
+from src.utils.NodeConfigModelReader import get_memory_draw
 from src.Constants import *
 from src.scripts.OperationalCarbon import calculate_carbon_footprint_ccf
 from src.scripts.EmbodiedCarbon import embodied_carbon_for_trace_records
@@ -34,6 +34,7 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
 
     task_extraction_result: TaskExtractionResult = extract_tasks_by_interval(workflow, interval)
     tasks_by_interval = task_extraction_result.tasks_by_interval
+    unique_nodes = list({task.hostname for task in task_extraction_result.all_tasks})
 
     ## Get raw TraceRecords for computing embodied carbon
     filename: str = workflow
@@ -45,11 +46,6 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
         logging.error("Failed to parse trace file %s: %s", f"data/trace/{filename}.{FILE}", e)
         raise
     #################
-
-    # for curr_interval, records_list in tasks_by_interval.items():
-    #     print(f'interval: {to_timestamp(curr_interval)}')
-    #     if records_list:
-    #         print(f'tasks: {", ".join([record.id for record in records_list])}')
 
     summary: str = ""
     summary += "Carbon Footprint Trace:\n"
@@ -66,22 +62,28 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
 
     check_reserved_memory_flag: bool = RESERVED_MEMORY in arguments
 
-    op_carbon_result = calculate_carbon_footprint_ccf(tasks_by_interval, ci, pue, model_name, memory_coefficient, check_reserved_memory_flag)
+    op_carbon_result = calculate_carbon_footprint_ccf(tasks_by_interval, ci, pue, model_name, memory_coefficient, unique_nodes)
     cpu_energy = op_carbon_result.cpu_energy
     cpu_energy_pue = op_carbon_result.cpu_energy_pue
     mem_energy = op_carbon_result.memory_energy
     mem_energy_pue = op_carbon_result.memory_energy_pue
     op_carbon_emissions = op_carbon_result.carbon_emissions
-    node_memory_usage = op_carbon_result.node_memory_usage
+    static_energy_per_host = op_carbon_result.static_cpu_energy_per_host
+    static_memory_energy = op_carbon_result.static_mem_energy
     records_res = op_carbon_result.records
 
-    fallback_cpu_model: str = get_cpu_model(model_name)
-    emb_carbon_emissions = embodied_carbon_for_trace_records(trace_records, use_cpu_usage=False, fallback_cpu_model=fallback_cpu_model)
-    total_carbon_emissions = op_carbon_emissions + emb_carbon_emissions
+    static_energy = 0.0
+    for host in static_energy_per_host.keys():
+        static_energy += static_energy_per_host[host]
+
+    #fallback_cpu_model: str = get_cpu_model(model_name)
+    #emb_carbon_emissions = embodied_carbon_for_trace_records(trace_records, use_cpu_usage=False, fallback_cpu_model=fallback_cpu_model)
+    emb_carbon_emissions = 0.0
+    total_carbon_emissions = op_carbon_emissions #+ emb_carbon_emissions
 
     summary += "\nCloud Carbon Footprint Method:\n"
-    summary += f"- Energy Consumption (exc. PUE): {cpu_energy}kWh\n"
-    summary += f"- Energy Consumption (inc. PUE): {cpu_energy_pue}kWh\n"
+    summary += f"- Energy Consumption (exc. PUE): {cpu_energy + static_energy}kWh\n"
+    summary += f"- Energy Consumption (inc. PUE): {cpu_energy_pue + (static_energy * pue)}kWh\n"
     summary += f"- Memory Energy Consumption (exc. PUE): {mem_energy}kWh\n"
     summary += f"- Memory Energy Consumption (inc. PUE): {mem_energy_pue}kWh\n"
     summary += f"- Operational Carbon Emissions: {op_carbon_emissions}gCO2e\n"
@@ -91,34 +93,15 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     print(f"Operational Carbon Emissions: {op_carbon_emissions}gCO2e")
     print(f"Embodied Carbon Emissions: {emb_carbon_emissions}gCO2e")
     print(f"Total Carbon Emissions: {total_carbon_emissions}gCO2e")
-    
+
     if check_reserved_memory_flag:
-        total_res_mem_energy: float = 0.0
-        total_res_mem_emissions: float = 0.0
-
-        for realtime, ci_val in node_memory_usage:
-            res_mem_energy: float = (arguments[RESERVED_MEMORY] * memory_coefficient * realtime * 0.001) * arguments[NUM_OF_NODES]  # convert from W to kW
-            total_res_mem_energy += res_mem_energy
-            total_res_mem_emissions += res_mem_energy * ci_val
-
-        total_energy: float = total_res_mem_energy + cpu_energy + mem_energy
-        res_report: str = f"Reserved Memory Energy Consumption: {total_res_mem_energy}kWh"
-        res_ems_report: str = f"Reserved Memory Carbon Emissions: {total_res_mem_emissions}gCO2e"
-        energy_split_report: str = f"% CPU [{((cpu_energy / total_energy) * 100):.2f}%] | % Memory [{(((total_res_mem_energy + mem_energy) / total_energy) * 100):.2f}%]"
+        total_energy: float = static_memory_energy + cpu_energy + mem_energy
+        res_report: str = f"Reserved Memory Energy Consumption: {static_memory_energy}kWh"
+        energy_split_report: str = f"% CPU [{((cpu_energy / total_energy) * 100):.2f}%] | % Memory [{(((static_memory_energy + mem_energy) / total_energy) * 100):.2f}%]"
         summary += f"\n{res_report}\n"
-        summary += f"{res_ems_report}\n"
         summary += f"{energy_split_report}\n"
         print(res_report)
         print(energy_split_report)
-
-    # if TASK_FLAG:
-    #     total_time: float = 0.0
-
-    #     for _, tasks_list in tasks_by_interval.items():
-    #         for task in tasks_list:
-    #             total_time += task.realtime
-
-    #     summary += f"\nTask Runtime: {total_time}ms\n"
 
     # Report Summary
     if isinstance(ci, float):

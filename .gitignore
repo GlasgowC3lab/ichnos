@@ -15,6 +15,9 @@ data/trace
 data/intensity
 !data/intensity/ci.csv
 
+data/ichnos_config/
+!data/ichnos_config/test_config.yaml
+
 # Evaluation scripts
 eval_scripts/
 

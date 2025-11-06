@@ -41,7 +41,7 @@ def min_max_linear_power_model(min: float, max: float) -> Callable[[float], floa
     :param max: Maximum watts.
     :return: A linear model function reflecting the power range.
     """
-    return linear_model((max - min) / 100, min)
+    return linear_model((max - min) / 100, 0)
 
 def baseline_linear_power_model(tdp_per_core: float) -> Callable[[float], float]:
     """
@@ -60,4 +60,4 @@ def fitted_linear_power_model(coefficient, intercept) -> Callable[[float], float
     :param intercept: the estimated intercept.
     :return the fitted linear function reflecting the power range.
     """
-    return linear_model(coefficient, intercept)
+    return linear_model(coefficient, 0)
