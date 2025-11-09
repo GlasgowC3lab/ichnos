@@ -13,11 +13,9 @@ def load_node_config():
     return node_config
 
 
-def get_cpu_model(node_id: str, model_name: str) -> str:
+def get_cpu_model(node_id: str) -> str:
     load_node_config()
-    model_data = model_name.split('_')
-    governor: str = model_data[0]
-    return node_config[node_id][governor]['cpu_model']
+    return node_config[node_id]['cpu_model']
 
 
 def get_memory_draw(node_id: str, model_name: str) -> float:
@@ -30,11 +28,9 @@ def get_memory_draw(node_id: str, model_name: str) -> float:
         return DEFAULT_MEMORY_POWER_DRAW
 
 
-def get_system_cores(node_id: str, model_name: str) -> int:
+def get_system_cores(node_id: str) -> int:
     load_node_config()
-    model_data = model_name.split('_')
-    governor: str = model_data[0]
-    return node_config[node_id][governor]['system_cores']
+    return node_config[node_id]['system_cores']
 
 
 def get_system_memory(node_id: str) -> int:

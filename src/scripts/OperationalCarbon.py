@@ -107,7 +107,7 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
     for node in nodes: 
         node_power_models[node] = get_power_model_for_node(node, model_name)
         node_memory_coeffs[node] = get_memory_draw(node, model_name)
-        node_system_cores[node] = get_system_cores(node, model_name)
+        node_system_cores[node] = get_system_cores(node)
         node_memory[node] = get_system_memory(node)
 
     static_energy = {}
