@@ -14,6 +14,7 @@ class UniversalTrace:
       - avg_cpu_usage: average CPU utilisation (0-100 or 0-1 depending on source) – preserved as given
       - cpu_model: CPU model string (may be empty if unknown)
       - memory: memory usage/request (bytes unless upstream converts)
+      - hostname: hostname/node where the task executed (may be empty if unknown)
 
     Optional fields (still emitted as CSV columns; empty string when missing):
       - rapl_timeseries: filename containing RAPL (energy/power) time series
@@ -27,6 +28,7 @@ class UniversalTrace:
     avg_cpu_usage: float
     cpu_model: str
     memory: float
+    hostname: str
     rapl_timeseries: Optional[str] = None
     cpu_usage_timeseries: Optional[str] = None
 
@@ -40,6 +42,7 @@ class UniversalTrace:
             'avg_cpu_usage': self.avg_cpu_usage,
             'cpu_model': self.cpu_model,
             'memory': self.memory,
+            'hostname': self.hostname,
             'rapl_timeseries': self.rapl_timeseries or '',
             'cpu_usage_timeseries': self.cpu_usage_timeseries or ''
         }
@@ -48,7 +51,7 @@ class UniversalTrace:
     def fieldnames() -> List[str]:
         return [
             'id', 'name', 'start', 'end', 'cpu_count', 'avg_cpu_usage', 'cpu_model', 'memory',
-            'rapl_timeseries', 'cpu_usage_timeseries'
+            'hostname', 'rapl_timeseries', 'cpu_usage_timeseries'
         ]
 
     @staticmethod
@@ -82,6 +85,7 @@ class UniversalTrace:
                     avg_cpu_usage=float(row.get('avg_cpu_usage') or 0.0),
                     cpu_model=row.get('cpu_model') or '',
                     memory=float(row.get('memory') or 0.0),
+                    hostname=row.get('hostname') or '',
                     rapl_timeseries=(row.get('rapl_timeseries') or None) or None,
                     cpu_usage_timeseries=(row.get('cpu_usage_timeseries') or None) or None
                 ))
@@ -131,6 +135,7 @@ class UniversalTrace:
                         memory_val = float(memory_raw)
                     except ValueError:
                         memory_val = 0.0
+                hostname = row.get('hostname') or row.get('host') or row.get('node') or ''
                 traces.append(UniversalTrace(
                     id=task_id,
                     name=name or '',
@@ -139,6 +144,7 @@ class UniversalTrace:
                     cpu_count=cpu_count,
                     avg_cpu_usage=avg_cpu_usage,
                     cpu_model=cpu_model,
-                    memory=memory_val
+                    memory=memory_val,
+                    hostname=hostname
                 ))
         return traces
