@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 from src.models.CarbonRecord import CarbonRecord
 
 @dataclass
@@ -12,5 +12,6 @@ class OperationalCarbonResult:
     memory_energy: float
     memory_energy_pue: float
     carbon_emissions: float
-    node_memory_usage: List[Tuple[float, float]]
+    static_cpu_energy_per_host: Dict[str, float]
+    static_mem_energy: float
     records: List[CarbonRecord]
