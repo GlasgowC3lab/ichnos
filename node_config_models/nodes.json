@@ -1,4 +1,60 @@
 {
+	"gpgnode-04": {
+		"schedutil": {
+			"tdp_per_core": 11.875,
+			"system_cores": 32,
+			"mem_draw": 0.3875,
+			"linear": [ 0.6390727272727276, 56.6190909090909 ],
+			"min_watts": 45.76333333333333,
+			"max_watts": 112.54,
+			"cpu_model": "Intel Xeon E5-2640"
+		}
+	},
+	"gpgnode-05": {
+		"schedutil": {
+			"tdp_per_core": 11.875,
+			"system_cores": 32,
+			"mem_draw": 0.3663020833333333,
+			"linear": [ 0.8374606060606065, 64.66757575757575 ],
+			"min_watts": 52.48666666666666,
+			"max_watts": 137.50333333333333,
+			"cpu_model": "Intel Xeon E5-2640"
+		}
+	},
+	"gpgnode-06": {
+		"schedutil": {
+			"tdp_per_core": 11.875,
+			"system_cores": 32,
+			"mem_draw": 0.3941406250000001,
+			"linear": [ 0.5396787878787882, 52.357272727272736 ],
+			"min_watts": 42.89666666666667,
+			"max_watts": 98.80333333333333,
+			"cpu_model": "Intel Xeon E5-2640"
+		}
+	},
+	"gpgnode-07": {
+		"schedutil": {
+			"tdp_per_core": 11.875,
+			"system_cores": 32,
+			"mem_draw": 0.347734375,
+			"linear": [ 0.5156090909090912, 51.37530303030301 ],
+			"min_watts": 42.35999999999999,
+			"max_watts": 96.07333333333334,
+			"cpu_model": "Intel Xeon E5-2640"
+		}
+	},
+	"gpgnode-08": {
+		"schedutil": {
+			"tdp_per_core": 11.875,
+			"system_cores": 32,
+			"mem_draw": 0.3503645833333333,
+			"linear": [ 0.5154303030303036, 51.55636363636362 ],
+			"min_watts": 42.18333333333333,
+			"max_watts": 95.84000000000002,
+			"cpu_model": "Intel Xeon E5-2640"
+		}
+	},
+
 	"gpg13": {
 		"powersave": {
 			"tdp_per_core": 11.875,
