@@ -19,6 +19,8 @@ data/trace
 data/intensity
 !data/intensity/ci.csv
 
+data/spark_event_logs/
+
 # Evaluation scripts
 eval_scripts/
 
