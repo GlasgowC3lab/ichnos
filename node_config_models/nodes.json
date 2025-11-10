@@ -1,5 +1,5 @@
 {
-	"gpg13": {
+	"gpgnode-13": {
 		"powersave": {
 			"mem_draw": 0.40752604166666667,
 			"linear": [ 0.5711151515151512, 54.82666666666669 ],
@@ -16,7 +16,7 @@
 		"system_cores": 32,
 		"cpu_model": "Intel Xeon E5-2640"
 	}, 
-	"gpg14": {
+	"gpgnode-14": {
 		"powersave": {
 			"mem_draw": 0.35888020833333334,
 			"linear": [ 0.5664090909090908, 55.61742424242428 ],
@@ -33,7 +33,7 @@
 		"system_cores": 32,
 		"cpu_model": "Intel Xeon E5-2640"
 	}, 
-	"gpg15": {
+	"gpgnode-15": {
 		"powersave": {
 			"mem_draw": 0.40458333333333335,
 			"linear": [ 0.6810454545454548, 60.19469696969696 ],
@@ -50,7 +50,7 @@
 		"system_cores": 32,
 		"cpu_model": "Intel Xeon E5-2640"
 	}, 
-	"gpg22": {
+	"gpgnode-22": {
 		"powersave": {
 			"mem_draw": 0.016041666666666666,
 			"linear": [ 1.7994121212121201, 180.0912121212122 ],
