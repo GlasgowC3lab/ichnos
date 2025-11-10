@@ -18,6 +18,39 @@ CSV_HEADERS = [
 
 
 # Functions
+def load_hostname_mapping(input_file_name: str) -> Dict[str, str]:
+    """
+    Load the IP-to-hostname mapping from the _hosts.csv file.
+
+    Args:
+        input_file_name (str): Name of the Spark event log file.
+
+    Returns:
+        Dict[str, str]: Dictionary mapping IP addresses to hostnames.
+    """
+    # Construct the mapping file path
+    base_name = input_file_name.rsplit('.', 1)[0] if '.' in input_file_name else input_file_name
+    mapping_file_path = f"data/spark_event_logs/{base_name}_hosts.csv"
+
+    ip_to_hostname = {}
+
+    try:
+        with open(mapping_file_path, 'r') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                ip = row.get('ip', '').strip()
+                hostname = row.get('hostname', '').strip()
+                if ip and hostname:
+                    ip_to_hostname[ip] = hostname
+        print(f"[SparkEventLogToTrace] Loaded {len(ip_to_hostname)} hostname mappings from [{mapping_file_path}]")
+    except FileNotFoundError:
+        print(f"[SparkEventLogToTrace] No hostname mapping file found at [{mapping_file_path}], using IP addresses")
+    except Exception as e:
+        print(f"[SparkEventLogToTrace] Error reading hostname mapping: {e}, using IP addresses")
+
+    return ip_to_hostname
+
+
 def parse_spark_event_log(input_file_name: str, output_path: str) -> None:
     """
     Parse a Spark event log JSON file from the data/spark_event_logs directory and convert it to a CSV trace file.
@@ -26,6 +59,9 @@ def parse_spark_event_log(input_file_name: str, output_path: str) -> None:
         input_file_name (str): Name of the Spark event log file.
         output_path (str): Path for the output CSV file.
     """
+    # Load hostname mapping
+    ip_to_hostname = load_hostname_mapping(input_file_name)
+
     input_path = f"data/spark_event_logs/{input_file_name}"
     with open(input_path, 'r') as infile, open(output_path, 'w', newline='') as outfile:
         writer = csv.writer(outfile)
@@ -67,6 +103,9 @@ def parse_spark_event_log(input_file_name: str, output_path: str) -> None:
                 trace_id = f"{stage_id}_{task_id}"
                 name = f"stage_{stage_id}_task_{task_id}"
 
+                # Map IP address to hostname if available
+                hostname = ip_to_hostname.get(host, host)
+
                 writer.writerow([
                     trace_id,
                     name,
@@ -76,7 +115,7 @@ def parse_spark_event_log(input_file_name: str, output_path: str) -> None:
                     avg_cpu_percent,
                     "",                   # cpu_model
                     peak_mem,
-                    host,
+                    hostname,
                     "",                   # rapl_timeseries
                     ""                    # cpu_usage_timeseries
                 ])
