@@ -67,8 +67,6 @@ def estimate_task_energy_consumption_ccf(task: UniversalTrace, model: Callable[[
 
     # Time (h)
     time_h: float = (task.end - task.start) / 1000 / 3600  # convert from ms to hours
-    # Number of Cores (int)
-    no_cores: int = task.cpu_count # TODO: we need to revise the use of cpu_count vs system_cores
     # CPU Usage (%)
     cpu_usage: float = task.avg_cpu_usage / system_cores  # nextflow reports as overall utilisation
     # Memory (GB)
