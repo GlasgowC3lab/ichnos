@@ -1,6 +1,7 @@
 # Python Files
 *__init__.py
 *__pycache__/
+cache
 
 # Project Specific Files
 *-marg*
@@ -9,11 +10,16 @@ data/raw-traces/
 # Output Directory
 output/
 
+data/universal_traces/
+data/intensity_timeseries/
+
 data/trace
 !data/trace/test.csv
 
 data/intensity
 !data/intensity/ci.csv
+
+data/spark_event_logs/
 
 data/ichnos_config/
 !data/ichnos_config/test_config.yaml

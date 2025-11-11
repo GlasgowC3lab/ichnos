@@ -1,5 +1,4 @@
-from src.models.TraceRecord import TraceRecord
-from src.models.CarbonRecord import CarbonRecord, HEADERS
+from src.models.UniversalTrace import UniversalTrace
 from src.utils.Usage import print_usage_exit_ExtractTimeline as print_usage_exit
 
 import sys
@@ -18,30 +17,20 @@ MEMORY_COEFFICIENT = 0.392  # CCF Average (See Website)
 
 
 # Functions
-def parse_trace_file(filepath):
-    with open(filepath, 'r') as file:
-        lines = [line.rstrip() for line in file]
-
-    header = lines[0]
-    records = []
-
-    for line in lines[1:]:
-        trace_record = TraceRecord(header, line, DELIMITER)
-        records.append(trace_record)
-
-    return records
+def parse_universal_trace(filepath):
+    return UniversalTrace.from_csv(filepath)
 
 
 
-def get_timeline_data(record: TraceRecord):
+def get_timeline_data(record: UniversalTrace):
     data = {}
 
-    data["process"] = record.process
-    data["realtime"] = record.realtime
+    data["process"] = record.name
+    data["realtime"] = record.end - record.start
     data["start"] = record.start
-    data["complete"] = record.complete
+    data["complete"] = record.end
     data["cpu_count"] = record.cpu_count
-    data["cpu_usage"] = record.cpu_percentage
+    data["cpu_usage"] = record.avg_cpu_usage
     data["cpu_model"] = record.cpu_model
     data["memory"] = record.memory
     
@@ -142,7 +131,7 @@ def extract_timeline(filename):
     if len(filename.split(".")) > 1:
         filename = filename.split(".")[-2]
 
-    records = parse_trace_file(f"data/trace/{filename}.{FILE}")
+    records = parse_universal_trace(f"data/universal_traces/{filename}.{FILE}")
     data_records = []
 
     for record in records:

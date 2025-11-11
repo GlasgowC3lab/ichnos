@@ -4,8 +4,9 @@ This module provides functions to compute energy consumption from tasks,
 apply temporal shifting based on carbon intensity, and generate corresponding reports.
 """
 
-from src.models.TraceRecord import TraceRecord
-from src.models.CarbonRecord import CarbonRecord
+# New models
+from src.models.UniversalTrace import UniversalTrace
+from src.models.ProcessedTrace import ProcessedTrace
 from src.models.TaskExtractionResult import TaskExtractionResult
 from src.models.TempShiftResult import TempShiftResult
 from src.WorkflowNameConstants import *
@@ -40,18 +41,19 @@ def explore_temporal_shifting_for_workflow(workflow: str, task_extraction_result
     overhead_intervals = task_extraction_result.overhead_intervals
 
     # Calculate total time of workflow from trace records
-    trace_records = task_extraction_result.trace_records
-    cpu_model = trace_records[0].cpu_model
+    trace_records = task_extraction_result.all_tasks  # List[UniversalTrace]
+    cpu_model = trace_records[0].cpu_model if trace_records else ''
     # Check if all trace records have the same CPU model
-    if not all(record.cpu_model == cpu_model for record in trace_records):
-        raise ValueError("All trace records must have the same CPU model for consistent calculations.")
+    if trace_records:
+        if not all(record.cpu_model == cpu_model for record in trace_records):
+            raise ValueError("All trace records must have the same CPU model for consistent calculations.")
     if not cpu_model:
         cpu_model = get_cpu_model()
 
     # Identify Hours in Order
     intervals_by_key = {}
 
-    for interval, tasks in tasks_by_interval.items():
+    for interval, tasks in tasks_by_interval.items():  # tasks: List[UniversalTrace]
         if len(tasks) > 0:
             hour_ts = to_timestamp(interval)
             month = str(hour_ts.month).zfill(2)

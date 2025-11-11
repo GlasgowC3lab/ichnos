@@ -5,6 +5,15 @@ DELIMITER = ","
 TRACE = "trace"
 CI = "ci"
 PUE = "pue"
+
+###################
+# adding water and land use input parameters
+WUE = "wue"
+EWIF = "ewif"
+LUE = "lue"
+ELIF = "elif"
+###################
+
 INTERVAL = "interval"
 CORE_POWER_DRAW = "core-power-draw"
 MEMORY_COEFFICIENT = "memory-coefficient"
