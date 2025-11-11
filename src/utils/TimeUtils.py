@@ -11,10 +11,8 @@ import logging
 from typing import List
 
 from src.models.TaskExtractionResult import TaskExtractionResult
-from src.models.TraceRecord import TraceRecord
-from src.models.CarbonRecord import CarbonRecord
+from src.models.UniversalTrace import UniversalTrace
 from src.models.TasksByTimeResult import TasksByTimeResult
-from src.utils.Parsers import parse_trace_file
 from src.Constants import FILE, DAY, MONTH, YEAR, HOUR, MINS
 from datetime import datetime
 
@@ -47,7 +45,7 @@ def to_timestamp_from_str(ts_str: str) -> datetime:
     stamp = datetime.strptime(ts_str, "%Y-%m-%dT%H:%MZ")
     return stamp.timestamp() * 1000
 
-def get_tasks_by_hour_with_overhead(start_hour: int, end_hour: int, tasks: List[CarbonRecord]) -> TasksByTimeResult:
+def get_tasks_by_hour_with_overhead(start_hour: int, end_hour: int, tasks: List[UniversalTrace]) -> TasksByTimeResult:
     """
     Group tasks by hour with additional overhead calculations.
 
@@ -69,20 +67,20 @@ def get_tasks_by_hour_with_overhead(start_hour: int, end_hour: int, tasks: List[
 
         for task in tasks:
             start = int(task.start)
-            complete = int(task.complete)
+            complete = int(task.end)
             if start >= i and complete <= i + step:
                 data.append(task)
                 runtimes.append(complete - start)
             elif complete > i and complete < i + step and start < i:
                 partial_task = copy.deepcopy(task)
                 partial_task.start = i
-                partial_task.realtime = complete - i
+                # emulate realtime like legacy
+                partial_task.end = complete
                 data.append(partial_task)
                 runtimes.append(complete - i)
             elif start > i and start < i + step and complete > i + step:
                 partial_task = copy.deepcopy(task)
-                partial_task.complete = i + step
-                partial_task.realtime = i + step - start
+                partial_task.end = i + step
                 data.append(partial_task)
                 if (i + step - start) > hour_overhead:
                     hour_overhead = i + step - start
@@ -90,8 +88,7 @@ def get_tasks_by_hour_with_overhead(start_hour: int, end_hour: int, tasks: List[
             elif start < i and complete > i + step:
                 partial_task = copy.deepcopy(task)
                 partial_task.start = i
-                partial_task.complete = i + step
-                partial_task.realtime = step
+                partial_task.end = i + step
                 data.append(partial_task)
                 runtimes.append(step)
 
@@ -101,7 +98,7 @@ def get_tasks_by_hour_with_overhead(start_hour: int, end_hour: int, tasks: List[
 
     return TasksByTimeResult(tasks_by_time=tasks_by_hour, overheads=overheads)
 
-def get_tasks_by_interval_with_overhead(start_interval: int, end_interval: int, tasks: List[CarbonRecord], interval: int) -> TasksByTimeResult:
+def get_tasks_by_interval_with_overhead(start_interval: int, end_interval: int, tasks: List[UniversalTrace], interval: int) -> TasksByTimeResult:
     """
     Group tasks by a user-defined interval with overhead calculations.
 
@@ -125,20 +122,19 @@ def get_tasks_by_interval_with_overhead(start_interval: int, end_interval: int, 
 
         for task in tasks:
             start = int(task.start)
-            complete = int(task.complete)
+            complete = int(task.end)
             if start >= i and complete <= i + step:
                 data.append(task)
                 runtimes.append(complete - start)
             elif complete > i and complete < i + step and start < i:
                 partial_task = copy.deepcopy(task)
                 partial_task.start = i
-                partial_task.realtime = complete - i
+                partial_task.end = complete
                 data.append(partial_task)
                 runtimes.append(complete - i)
             elif start > i and start < i + step and complete > i + step:
                 partial_task = copy.deepcopy(task)
-                partial_task.complete = i + step
-                partial_task.realtime = i + step - start
+                partial_task.end = i + step
                 data.append(partial_task)
                 if (i + step - start) > hour_overhead:
                     hour_overhead = i + step - start
@@ -146,8 +142,7 @@ def get_tasks_by_interval_with_overhead(start_interval: int, end_interval: int, 
             elif start < i and complete > i + step:
                 partial_task = copy.deepcopy(task)
                 partial_task.start = i
-                partial_task.complete = i + step
-                partial_task.realtime = step
+                partial_task.end = i + step
                 data.append(partial_task)
                 runtimes.append(step)
 
@@ -172,7 +167,7 @@ def to_closest_interval_ms(original: float, interval: int) -> int:
     return int(ts.timestamp() * 1000)
 
 
-def get_tasks_by_interval(trace_records: List[TraceRecord], interval: int) -> TaskExtractionResult:
+def get_tasks_by_interval(trace_records: List[UniversalTrace], interval: int) -> TaskExtractionResult:
     """
     Extract tasks grouped by a specified interval from a list of tasks.
 
@@ -180,16 +175,12 @@ def get_tasks_by_interval(trace_records: List[TraceRecord], interval: int) -> Ta
     :param interval: Interval in minutes.
     :return: A TaskExtractionResult object containing tasks grouped by interval and all tasks.
     """
-    carbon_records = []    
-    for record in trace_records:
-        try:
-            data = record.make_carbon_record()
-            carbon_records.append(data)
-        except Exception as e:
-            logging.error("Error converting record to carbon record: %s", e)
+    carbon_records = trace_records  # now already universal traces
+    if not carbon_records:
+        return TaskExtractionResult(tasks_by_interval={}, all_tasks=[], workflow_start=0, workflow_end=0, overhead_intervals=[])
 
     starts = [int(task.start) for task in carbon_records]
-    ends = [int(task.complete) for task in carbon_records]
+    ends = [int(task.end) for task in carbon_records]
 
     earliest = min(starts)
     latest = max(ends)
@@ -200,14 +191,7 @@ def get_tasks_by_interval(trace_records: List[TraceRecord], interval: int) -> Ta
     tasks_by_interval = tasks_by_interval_result.tasks_by_time
     overhead_intervals = tasks_by_interval_result.overheads
 
-    return TaskExtractionResult(
-        tasks_by_interval=tasks_by_interval,
-        all_tasks=carbon_records,
-        trace_records=trace_records,
-        workflow_start=earliest,
-        workflow_end=latest,
-        overhead_intervals=overhead_intervals
-    )
+    return TaskExtractionResult(tasks_by_interval=tasks_by_interval, all_tasks=carbon_records, workflow_start=earliest, workflow_end=latest, overhead_intervals=overhead_intervals)
 
 
 def extract_tasks_by_interval(filename: str, interval: int) -> TaskExtractionResult:
@@ -220,11 +204,13 @@ def extract_tasks_by_interval(filename: str, interval: int) -> TaskExtractionRes
     """
     if len(filename.split(".")) > 1:
         filename = filename.split(".")[-2]
+    from src.utils.Parsers import parse_universal_trace_file  # local import to avoid cycles
+    trace_path_universal = f"data/universal_traces/{filename}.{FILE}"
     try:
-        trace_records = parse_trace_file(f"data/trace/{filename}.{FILE}")
-    except Exception as e:
-        logging.error("Failed to parse trace file %s: %s", f"data/trace/{filename}.{FILE}", e)
-        raise
+        trace_records = parse_universal_trace_file(trace_path_universal)
+    except Exception as e2:
+        logging.error("Failed to parse universal trace file %s: %s", trace_path_universal, e2)
+        trace_records = []
     return get_tasks_by_interval(trace_records, interval)
 
 def get_intervals(arr: List[int]) -> List[int]:

@@ -9,7 +9,7 @@ import logging
 from typing import Tuple, List, Dict, Union
 import yaml
 from src.Constants import *
-from src.models.TraceRecord import TraceRecord
+from src.models.UniversalTrace import UniversalTrace
 from src.utils.Usage import print_usage_exit_TemporalInterrupt
 
 """
@@ -208,28 +208,14 @@ def parse_ci_intervals(filename: str) -> Dict[str, float]:
     return ci_map
 
 
-def parse_trace_file(filepath: str) -> List[TraceRecord]:
-    """
-    Parse a trace file into a list of TraceRecord objects.
-    
-    :param filepath: Path to the trace file.
-    :return: List of TraceRecord objects.
-    """
+def parse_universal_trace_file(filepath: str) -> List[UniversalTrace]:
+    """Parse a universal trace CSV (produced by UniversalTrace.to_csv)."""
     try:
-        with open(filepath, 'r') as file:
-            lines = [line.rstrip() for line in file]
+        traces = UniversalTrace.from_csv(filepath)
     except Exception as e:
-        logging.error("Error opening trace file %s: %s", filepath, e)
+        logging.error("Error parsing universal trace file %s: %s", filepath, e)
         raise
-    header = lines[0]
-    records: List[TraceRecord] = []
-    for line in lines[1:]:
-        try:
-            trace_record = TraceRecord(header, line, DELIMITER)
-            records.append(trace_record)
-        except Exception as e:
-            logging.error("Error parsing line in trace file %s: %s", filepath, e)
-    return records
+    return traces
 
 ##################################
 # MARK: Private functions

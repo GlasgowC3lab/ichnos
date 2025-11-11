@@ -80,3 +80,13 @@ def print_usage_exit_Convertor() -> None:
     logging.error(example_start)
     logging.error(example_start_ms)
     exit(-1)
+
+def print_usage_exit_SparkEventLogToTrace() -> None:
+    """
+    Print usage information for the SparkEventLogToTrace script and exit.
+    """
+    usage = "[SparkEventLogToTrace] Usage: python -m src.scripts.SparkEventLogToTrace <input-file-name> <output-file>"
+    example = "[SparkEventLogToTrace] Example: python -m src.scripts.SparkEventLogToTrace spark-event-log output/tasks_trace.csv"
+    logging.error(usage)
+    logging.error(example)
+    exit(-1)

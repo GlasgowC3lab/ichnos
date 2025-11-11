@@ -6,24 +6,24 @@ detailed trace reports, and any other file-based outputs required by the project
 
 import os
 import logging
-from typing import Iterable, Any
-from src.models.CarbonRecord import HEADERS, CarbonRecord
+from typing import Iterable, List
+from src.models.ProcessedTrace import ProcessedTrace
 
-def write_trace_file(folder: str, trace_file: str, records: Iterable[Any]) -> None:
-    """
-    Write trace records to a CSV file.
-    
-    :param folder: Directory where the file will be saved.
-    :param trace_file: Base name for the trace file.
-    :param records: Iterable of trace record objects.
+def write_trace_file(folder: str, trace_file: str, records: Iterable[ProcessedTrace]) -> None:
+    """Write processed trace records (ProcessedTrace) to CSV.
+
+    Always writes the ProcessedTrace header schema.
     """
     _create_folder(folder)
     output_file_name = f"{folder}/{trace_file}-trace.csv"
+    rec_list: List[ProcessedTrace] = list(records)
     try:
         with open(output_file_name, "w") as file:
-            file.write(f"{HEADERS}\n")
-            for record in records:
-                file.write(f"{record}\n")
+            fns = ProcessedTrace.fieldnames()
+            file.write(','.join(fns) + '\n')
+            for r in rec_list:
+                row = ','.join(str(r.to_dict()[h]) for h in fns)
+                file.write(row + '\n')
     except Exception as e:
         logging.error("Failed to write trace file %s: %s", output_file_name, e)
         raise
@@ -45,113 +45,61 @@ def write_summary_file(folder: str, trace_file: str, content: str) -> None:
         logging.error("Failed to write summary file %s: %s", output_file_name, e)
         raise
 
-def write_trace_and_detailed_report(folder: str, trace_file: str, records: Iterable[CarbonRecord], content: str) -> None:
-    """
-    Write both detailed trace and summary reports.
-    
-    :param folder: Directory where files will be saved.
-    :param trace_file: Base name to use for output files.
-    :param records: Iterable of trace record objects.
-    :param content: Summary content to include in the detailed report.
+def write_trace_and_detailed_report(folder: str, trace_file: str, records: Iterable[ProcessedTrace], content: str) -> None:
+    """Write processed traces plus a human-readable ranking summary.
+
+    Aggregates duplicate task ids (summing footprint metrics) then ranks tasks
+    by average_co2e (primary) and runtime (secondary). A second list ranks by
+    marginal_co2e. Embodied emissions included only for informational tie-breaks.
     """
     output_file_name = f"{folder}/{trace_file}-detailed-summary.txt"
-    whole_tasks = {}
-    for record in records:
-        curr_id = record.id
-        if curr_id in whole_tasks:
-            present = whole_tasks[curr_id]
-            present.co2e += record.co2e
-            present.energy += record.energy
-            present.avg_ci = f'{present.avg_ci}|{record.avg_ci}'
-            present.realtime += record.realtime
+    # Aggregate duplicates
+    aggregated: dict[str, ProcessedTrace] = {}
+    for r in records:
+        tid = r.universal.id
+        if tid in aggregated:
+            existing = aggregated[tid]
+            existing.average_co2e += r.average_co2e
+            existing.marginal_co2e += r.marginal_co2e
+            existing.embodied_co2e += r.embodied_co2e
+            # avg_ci: simple mean of the two (no energy weighting available)
+            existing.avg_ci = (existing.avg_ci + r.avg_ci) / 2 if existing.avg_ci and r.avg_ci else (existing.avg_ci or r.avg_ci)
         else:
-            whole_tasks[curr_id] = record
-    records = whole_tasks.values()
-    try:
-        write_trace_file(folder, trace_file, records)
-    except Exception as e:
-        logging.error("Error writing trace file from detailed report: %s", e)
-        raise
-    sorted_records = sorted(records, key=lambda r: (-r.co2e, -r.energy, -r.realtime))
-    sorted_records_par = sorted(records, key=lambda r: (-r.energy, -r.realtime))
+            aggregated[tid] = r
+    rec_list: List[ProcessedTrace] = list(aggregated.values())
+    # Persist CSV
+    write_trace_file(folder, trace_file, rec_list)
+    # Sorting helpers
+    def runtime(pr: ProcessedTrace) -> float:
+        return (pr.universal.end - pr.universal.start) / 1000.0
+    rec_sorted_footprint = sorted(rec_list, key=lambda x: (-x.average_co2e, -runtime(x)))
+    rec_sorted_marginal = sorted(rec_list, key=lambda x: (-x.marginal_co2e, -runtime(x)))
     try:
         with open(output_file_name, "w") as file:
-            file.write(f'Detailed Report for {trace_file}\n')
-            file.write('\nTop 10 Tasks - ranked by footprint, energy and realtime:\n')
-            for record in sorted_records[:10]:
-                file.write(record.name + ':' + record.id + '\n')
-            file.write('\nTop 10 Tasks - ranked by energy and realtime:\n')
-            for record in sorted_records_par[:10]:
-                file.write(record.name + ':' + record.id + '\n')
-            diff = set(sorted_records[:10]).difference(set(sorted_records_par[:10]))
-            if len(diff) == 0:
-                file.write('\nThe top 10 tasks with the largest energy and realtime have the largest footprint.\n')
+            file.write(f"Detailed Report for {trace_file}\n")
+            file.write(f"{content}\n\n" if content else "")
+            file.write("Top 10 Tasks - ranked by average CO2e then runtime:\n")
+            for r in rec_sorted_footprint[:10]:
+                file.write(f"{r.universal.name}:{r.universal.id} average_co2e={r.average_co2e:.4f} runtime_s={runtime(r):.2f}\n")
+            file.write("\nTop 10 Tasks - ranked by marginal CO2e then runtime:\n")
+            for r in rec_sorted_marginal[:10]:
+                file.write(f"{r.universal.name}:{r.universal.id} marginal_co2e={r.marginal_co2e:.4f} runtime_s={runtime(r):.2f}\n")
+            foot_top = rec_sorted_footprint[:10]
+            marg_top = rec_sorted_marginal[:10]
+            marg_ids = {r.universal.id for r in marg_top}
+            diff_records = [r for r in foot_top if r.universal.id not in marg_ids]
+            if not diff_records:
+                file.write("\nThe top 10 marginal CO2e tasks coincide with the top 10 average CO2e tasks.\n")
             else:
-                file.write('\nThe following tasks have one of the top 10 largest footprints, but not the highest energy or realtime...\n')
-                file.write(', '.join([record.name + ':' + record.id for record in diff]))
+                file.write("\nTasks in average CO2e top 10 but not marginal top 10:\n")
+                file.write(', '.join(f"{r.universal.name}:{r.universal.id}" for r in diff_records))
     except Exception as e:
         logging.error("Failed to write detailed report file %s: %s", output_file_name, e)
         raise
 
-def write_task_trace_and_rank_report(folder: str, trace_file: str, records: Iterable[Any]) -> None:
-    """
-    Write detailed and ranked task reports.
-    
-    :param folder: Directory where files will be saved.
-    :param trace_file: Base name for the output files.
-    :param records: Iterable of trace record objects.
-    """
-    _create_folder(folder)
-    output_file_name = f"{folder}/{trace_file}-detailed-summary.txt"
-    technical_output_file_name = f"{folder}/{trace_file}-task-ranked.csv"
-    whole_tasks = {}
-    for record in records:
-        curr_id = record.id
-        if curr_id in whole_tasks:
-            present = whole_tasks[curr_id]
-            present.co2e += record.co2e
-            present.energy += record.energy
-            present.avg_ci = f'{present.avg_ci}|{record.avg_ci}'
-            present.realtime += record.realtime
-        else:
-            whole_tasks[curr_id] = record
-    records = whole_tasks.values()
-    try:
-        write_trace_file(folder, trace_file, records)
-    except Exception as e:
-        logging.error("Error writing trace file for task rank report: %s", e)
-        raise
-    # sorted_records = sorted(records, key=lambda r: (-r.co2e, -r.energy, -r.realtime))
-    # sorted_records_par = sorted(records, key=lambda r: (-r.energy, -r.realtime))
-    # try:
-    #     with open(output_file_name, "w") as report_file:
-    #         with open(technical_output_file_name, "w") as task_rank_file:
-    #             report_file.write(f'Detailed Report for {trace_file}\n')
-    #             task_rank_file.write(f'{HEADERS}\nBREAK\n')
-    #             report_file.write('\nTop 10 Tasks - ranked by footprint, energy and realtime:\n')
-    #             task_rank_file.write('TOP|FOOTPRINT-ENERGY-REALTIME\n')
-    #             report_file.write(f'\n{HEADERS}\n')
-    #             for record in sorted_records[:10]:
-    #                 report_file.write(f"{record}\n")
-    #                 task_rank_file.write(f"{record}\n")
-    #             task_rank_file.write('BREAK\n')
-    #             report_file.write('\nTop 10 Tasks - ranked by energy and realtime:\n')
-    #             report_file.write(f'\n{HEADERS}\n')
-    #             task_rank_file.write('TOP|ENERGY-REALTIME\n')
-    #             for record in sorted_records[:10]:
-    #                 report_file.write(f"{record}\n")
-    #                 task_rank_file.write(f"{record}\n")
-    #             diff = set(sorted_records[:10]).difference(set(sorted_records_par[:10]))
-    #             if len(diff) == 0:
-    #                 report_file.write('\nThe top 10 tasks with the largest energy and realtime have the largest footprint.\n')
-    #                 task_rank_file.write('BREAK\nSAME\nEND\n')
-    #             else:
-    #                 report_file.write('\nThe following tasks have one of the top 10 largest footprints, but not the highest energy or realtime...\n')
-    #                 report_file.write(', '.join([str(task) for task in diff]))
-    #                 task_rank_file.write('BREAK\nDIFF\nEND\n')
-    # except Exception as e:
-    #     logging.error("Failed to write task trace and rank report files: %s", e)
-    #     raise
+def write_task_trace_and_rank_report(folder: str, trace_file: str, records: Iterable[ProcessedTrace]) -> None:
+    """Deprecated: prefer write_trace_and_detailed_report. Kept for API stability."""
+    write_trace_and_detailed_report(folder, trace_file, records, content="")
 
 ##################################
 # MARK: Private Functions

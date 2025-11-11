@@ -1,0 +1,8 @@
+trace: "sarek-1"
+ci: "test_ci"
+pue: 1.0
+wue: 0.1
+ewif: "test_ewif"
+lue: 0.01
+elif: "test_elif"
+model-name: "clusterb_default_minmax"

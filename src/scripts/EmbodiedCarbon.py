@@ -1,6 +1,5 @@
 from src.external_apis.Boavizta import get_cpu_impact
-from src.models.CarbonRecord import CarbonRecord
-from src.models.TraceRecord import TraceRecord
+from src.models.ProcessedTrace import ProcessedTrace
 
 from typing import List
 import sys
@@ -28,57 +27,26 @@ def calculate_cpu_embodied_carbon(cpu_model: str, duration_used: float, lifetime
     embodied_carbon_kg *= cpu_usage  # Adjust for CPU usage
     return embodied_carbon_kg * 1000  # Convert to grams
 
-def embodied_carbon_for_carbon_records(records: List[CarbonRecord], use_cpu_usage: bool = False, fallback_cpu_model: str = None) -> float:
+def embodied_carbon_for_processed_traces(records: List[ProcessedTrace], use_cpu_usage: bool = False, fallback_cpu_model: str = None) -> float:
+    """Calculate embodied carbon for a list of ProcessedTrace objects.
+
+    Each ProcessedTrace carries a UniversalTrace (processed.universal) supplying time & hardware info.
     """
-	Calculate the embodied carbon for a list of CarbonRecord objects.
-	
-	Parameters:
-	records (List[CarbonRecord]): A list of CarbonRecord objects.
-	use_cpu_usage (bool): Flag to indicate whether to consider CPU usage in calculations.
-	fallback_cpu_model (str): The CPU model to use if the record does not have a valid cpu_model.
-	
-	Returns:
-	float: The total embodied carbon in kilograms.
-	"""
-	
-    total_embodied_carbon = 0.0
-    for record in records:
-        cpu_model = record.cpu_model if (record.cpu_model is not None and record.cpu_model != "None") else fallback_cpu_model
-        duration_used = record.realtime / 1000 / 3600  # convert from ms to hours
+    total = 0.0
+    for rec in records:
+        u = rec.universal
+        cpu_model = u.cpu_model if (u.cpu_model and u.cpu_model != 'None') else fallback_cpu_model
+        duration_ms = (u.end - u.start)
+        duration_used_h = duration_ms / 1000 / 3600 if duration_ms else 0.0
         adjusted_cpu_usage = 1.0
-        if use_cpu_usage:
-            # Adjust CPU usage percent based on the number of cores
-            adjusted_cpu_usage = record.cpu_usage / (record.core_count * 100)
-        
-        total_embodied_carbon += calculate_cpu_embodied_carbon(cpu_model, duration_used, cpu_usage=adjusted_cpu_usage)
-    
-    return total_embodied_carbon
+        if use_cpu_usage and u.cpu_count:
+            usage_val = u.avg_cpu_usage
+            if usage_val > 1.0:
+                usage_val = usage_val / 100.0
+            adjusted_cpu_usage = min(1.0, max(0.0, usage_val))
+        total += calculate_cpu_embodied_carbon(cpu_model, duration_used_h, cpu_usage=adjusted_cpu_usage)
+    return total
 
-def embodied_carbon_for_trace_records(trace_records: List[TraceRecord], use_cpu_usage: bool = False, fallback_cpu_model: str = None) -> float:
-    """
-    Calculate the embodied carbon for a list of TraceRecord objects.
-
-    Parameters:
-    trace_records (List[TraceRecord]): A list of TraceRecord objects.
-    use_cpu_usage (bool): Flag to indicate whether to consider CPU usage in calculations.
-    fallback_cpu_model (str): The CPU model to use if the record does not have a valid cpu_model.
-
-    Returns:
-    float: The total embodied carbon in kilograms.
-    """
-
-    total_embodied_carbon = 0.0
-    for trace_record in trace_records:
-        cpu_model = trace_record._cpu_model if (trace_record._cpu_model is not None and trace_record._cpu_model != "None") else fallback_cpu_model
-        duration_used = trace_record._realtime / 1000 / 3600  # convert from ms to hours
-        adjusted_cpu_usage = 1.0
-        if use_cpu_usage:
-            # Adjust CPU usage percent based on the number of cores
-            adjusted_cpu_usage = trace_record._cpu_usage / (trace_record._cpu_count * 100)
-        
-        total_embodied_carbon += calculate_cpu_embodied_carbon(cpu_model, duration_used, cpu_usage=adjusted_cpu_usage)
-    
-    return total_embodied_carbon
 
 if __name__ == "__main__":
     # Parse args
