@@ -21,6 +21,9 @@ data/intensity
 
 data/spark_event_logs/
 
+data/ichnos_config/
+!data/ichnos_config/test_config.yaml
+
 # Evaluation scripts
 eval_scripts/
 

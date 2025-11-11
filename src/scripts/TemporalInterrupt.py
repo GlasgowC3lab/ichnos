@@ -48,7 +48,7 @@ def explore_temporal_shifting_for_workflow(workflow: str, task_extraction_result
         if not all(record.cpu_model == cpu_model for record in trace_records):
             raise ValueError("All trace records must have the same CPU model for consistent calculations.")
     if not cpu_model:
-        cpu_model = get_cpu_model(model_name)
+        cpu_model = get_cpu_model()
 
     # Identify Hours in Order
     intervals_by_key = {}
