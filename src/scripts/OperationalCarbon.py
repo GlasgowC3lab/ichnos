@@ -84,7 +84,7 @@ def estimate_task_energy_consumption_ccf(task: IchnosTrace, model: Callable[[flo
 
 
 # Estimate Carbon Footprint 
-def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[IchnosTrace]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, unique_nodes: List[str], check_node_memory: bool = False, ewif: Union[float, Dict[str, float]]= None, wue: float = None, elif_: Union[float, Dict[str, float]] = None, lue: float = None ) -> OperationalCarbonResult:
+def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, List[IchnosTrace]], ci: Union[float, Dict[str, float]], pue: float, model_name: str, memory_coefficient: float, unique_nodes: List[str], check_node_memory: bool = False, ewif: Union[float, Dict[str, float]]= None, wue: float = None, elif_: Union[float, Dict[str, float]] = None, lue: float = None, node_governors: Dict[str, str] = None ) -> OperationalCarbonResult:
     """
     Calculate the carbon footprint using the CCF methodology.
     
@@ -117,9 +117,10 @@ def calculate_carbon_footprint_ccf(tasks_grouped_by_interval: Dict[datetime, Lis
     node_system_cores: Dict[str, int] = {}
     node_memory: Dict[str, float] = {}
 
+    node_governors = node_governors or {}
     for node in unique_nodes: 
-        node_power_models[node] = get_power_model_for_node(node, model_name)
-        node_memory_coeffs[node] = get_memory_draw(node, model_name)
+        node_power_models[node] = get_power_model_for_node(node, model_name, node_governors)
+        node_memory_coeffs[node] = get_memory_draw(node, model_name, node_governors)
         node_system_cores[node] = get_system_cores(node)
         node_memory[node] = get_system_memory(node)
 
