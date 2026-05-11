@@ -8,10 +8,34 @@ To collect node measurements for CPU and Memory energy consumption, refer to the
 For the current version, replicating the previous calculation approach noted in the Credits section, example usage has been provided with default values:
 ```
 $ python -m src.scripts.IchnosCF <trace-name> <ci-value|ci-file-name> <power_model> <? interval=60> <? pue=1.0> <? memory-coeff=0.392>
-$ python3 -m src.scripts.IchnosCF ampliseq-1 uk-marg-010125-110225 gpg_15_powersave_linear 5 1.0 0.392
-```      
+$ python3 -m src.scripts.IchnosCF ampliseq-1 uk-marg-010125-110225 powersave_linear 5 1.0 0.392
+```
 
-> **Note**  
+## Specifying Node Governors
+
+The default CLI option still exists. When using positional CLI arguments, the governor is taken from the `<power_model>` value and used for every node. For example, `powersave_linear` uses each node's configured `powersave` linear model.
+
+To override governors for specific nodes, use a YAML config file with the `node-governors` key:
+```
+trace: rnaseq-2
+carbon-intensity: 1
+model-name: powersave_linear
+interval: 60
+pue: 1.0
+memory-coefficient: 0.392
+node-governors:
+  node-04: performance
+  node-05: usersched
+```
+
+Run Ichnos with the config file:
+```
+$ python3 -m src.scripts.IchnosCF -c path/to/config.yaml
+```
+
+In this example, `node-04` uses `performance_linear`, `node-05` uses `powersave_linear`, and nodes not listed under `node-governors` continue to use the governor from `model-name` (`powersave_linear`). The `node-governors` value can also be a path to a JSON file containing the same node-to-governor mapping.
+
+> **Note**
 > The trace file name must be the file name only, and traces should be csv files stored in the [data trace](data/trace/) directory!
 
 > **Note**  
