@@ -151,11 +151,11 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     print(f"Total Carbon Emissions: {total_carbon_emissions}gCO2e")
 
     if wue:
-        summary += f"- Total Water Footprint: {op_water_emissions}\n"
+        summary += f"- Total Water Footprint: {op_water_emissions}l\n"
         print(f"Total Water Footprint: {op_water_emissions} Liters")
 
     if lue:
-        summary += f"- Total Land Use Footprint: {op_land_emissions}\n"
+        summary += f"- Total Land Use Footprint: {op_land_emissions}sqm\n"
         print(f"Total Land Use Footprint: {op_land_emissions} square meters")
 
     if check_reserved_memory_flag:
