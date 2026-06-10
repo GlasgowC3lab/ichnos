@@ -8,9 +8,9 @@ def cast(generationmix):
 
     for source, value in generationmix.items():
         if source == 'flows': continue
-        if source in ['hydro discharge', 'battery discharge']: # TODO include these 
+        if source in ['hydro discharge', 'battery discharge']: # v3
             source = "unknown"
-        if source in [ 'hydro storage', 'battery storage']:
+        if source in [ 'hydro storage', 'battery storage']: # v4
             source = "unknown"
             value = value["discharge"] # - value["charge"]
         if value is None: 
