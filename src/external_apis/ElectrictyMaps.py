@@ -64,7 +64,7 @@ def get_energy_mix(zone, start_str=None, end_str=None, mix_type="mix"):
     start_dt = datetime.strptime(start_str, '%Y-%m-%dT%H:%MZ')
     end_dt = datetime.strptime(end_str, '%Y-%m-%dT%H:%MZ')
 
-    api_key = "e8NKfZFaJQejUaz3CRa7"
+    api_key = "replace_api_key"
  
     data_period = make_json_get_request(url=f"https://api.electricitymaps.com/v4/electricity-mix/past-range?zone={zone}&start={start_dt.strftime('%Y-%m-%d+%H%%3A%M')}&end={end_dt.strftime('%Y-%m-%d+%H%%3A%M')}", api_key=api_key)["data"]#['history']
 
