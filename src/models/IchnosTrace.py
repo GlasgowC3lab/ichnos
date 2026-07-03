@@ -148,3 +148,37 @@ class IchnosTrace:
                     hostname=hostname
                 ))
         return traces
+
+    @staticmethod
+    def from_airflow_trace_csv(filepath: str) -> List['IchnosTrace']:
+        """Parse an Airflow trace CSV file and return IchnosTrace records.
+
+        Expected Nextflow columns (lenient): id, start, complete, cpus|cpu, %cpu|cpu_usage, cpu_model, memory|rss
+        We normalise column names to IchnosTrace schema.
+        Missing numeric fields default to 0; missing strings to ''.
+        """
+        traces: List[IchnosTrace] = []
+        with open(filepath, newline='') as csvfile:
+            reader = csv.DictReader(csvfile)
+            for row in reader:
+                task_id = row.get('')
+                name = row.get('Id')
+                start = int(row.get('Start timestamp') or 0)
+                end = int(row.get('End timestamp') or 0)
+                cpu_count = int(float(row.get('Cpu_count')) or 0)
+                avg_cpu_usage = float(row.get('Avg_cpu_usage'))
+                cpu_model = row.get('cpu_model') or row.get('cpu_model') or ''
+                memory_val = row.get('Memory')
+                hostname = row.get('Hostname')
+                traces.append(IchnosTrace(
+                    id=task_id,
+                    name=name or '',
+                    start=start,
+                    end=end,
+                    cpu_count=cpu_count,
+                    avg_cpu_usage=avg_cpu_usage,
+                    cpu_model=cpu_model,
+                    memory=memory_val,
+                    hostname=hostname
+                ))
+        return traces

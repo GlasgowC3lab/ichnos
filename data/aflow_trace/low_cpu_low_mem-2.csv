@@ -1,0 +1,17 @@
+,Id,Start timestamp,End timestamp,Cpu_count,Avg_cpu_usage,Memory,Hostname,duration,cpu_model
+0,ichnos_cpu_low_mem_low_w01_t01,1780073298000,1780073904075,0.002089,0.013058,21430272,hu-worker-c40,606075,Intel Xeon Silver 4314
+1,ichnos_cpu_low_mem_low_w01_t02,1780073298000,1780073902706,0.002835,0.021806,21430272,hu-worker-c45,604706,Intel Xeon Silver 4314
+2,ichnos_cpu_low_mem_low_w01_t03,1780073298000,1780073902707,0.002939,0.020992,21430272,hu-worker-c44,604707,Intel Xeon Silver 4314
+3,ichnos_cpu_low_mem_low_w01_t04,1780073298000,1780073902708,0.002353,0.016809,21426176,hu-worker-c45,604708,Intel Xeon Silver 4314
+4,ichnos_cpu_low_mem_low_w02_t01,1780073905000,1780074510170,0.003063,0.019141,21446656,hu-worker-c45,605170,Intel Xeon Silver 4314
+5,ichnos_cpu_low_mem_low_w02_t02,1780073905000,1780074510171,0.002381,0.015872,21430272,hu-worker-c40,605171,Intel Xeon Silver 4314
+6,ichnos_cpu_low_mem_low_w02_t03,1780073905000,1780074510171,0.003289,0.023489,21422080,hu-worker-c45,605171,Intel Xeon Silver 4314
+7,ichnos_cpu_low_mem_low_w02_t04,1780073905000,1780074510171,0.003374,0.021085,21426176,hu-worker-c40,605171,Intel Xeon Silver 4314
+8,ichnos_cpu_low_mem_low_w03_t01,1780074511000,1780075115708,0.0,0.0,21426176,hu-worker-c45,604708,Intel Xeon Silver 4314
+9,ichnos_cpu_low_mem_low_w03_t02,1780074511000,1780075115709,0.0,0.0,21413888,hu-worker-c44,604709,Intel Xeon Silver 4314
+10,ichnos_cpu_low_mem_low_w03_t03,1780074511000,1780075115710,0.0,0.0,21426176,hu-worker-c44,604710,Intel Xeon Silver 4314
+11,ichnos_cpu_low_mem_low_w03_t04,1780074511000,1780075115710,0.0,0.0,21430272,hu-worker-c45,604710,Intel Xeon Silver 4314
+12,ichnos_cpu_low_mem_low_w04_t01,1780075116000,1780075720814,0.0,0.0,21426176,hu-worker-c40,604814,Intel Xeon Silver 4314
+13,ichnos_cpu_low_mem_low_w04_t02,1780075116000,1780075720815,0.0,0.0,21434368,hu-worker-c45,604815,Intel Xeon Silver 4314
+14,ichnos_cpu_low_mem_low_w04_t04,1780075116000,1780075720818,0.0,0.0,21458944,hu-worker-c44,604818,Intel Xeon Silver 4314
+15,ichnos_cpu_low_mem_low_w04_t03,1780075117000,1780075720816,0.0,0.0,21487616,hu-worker-c44,603816,Intel Xeon Silver 4314
