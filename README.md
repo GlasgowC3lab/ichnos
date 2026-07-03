@@ -1,5 +1,5 @@
-# Carbon-Footprint
-A project with scripts to methodically calculate the Carbon Footprint of Workflow Executions from Nextflow trace files.
+# Ichnos+
+A project with scripts to methodically calculate the energy consumption, carbon emissions, embodied carbon emissions, land and water use of workflow executions, originally focusing on Nextflow trace files. 
 
 # Setup
 To collect node measurements for CPU and Memory energy consumption, refer to the instructions and scripts available in the [node measurement](node_measurement) directory.
