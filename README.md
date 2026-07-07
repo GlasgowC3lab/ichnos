@@ -4,18 +4,22 @@ A project with scripts to methodically calculate the energy consumption, carbon 
 # Setup
 To collect node measurements for CPU and Memory energy consumption, refer to the instructions and scripts available in the [node measurement](node_measurement) directory.
 
-# Usage
-For the current version, replicating the previous calculation approach noted in the Credits section, example usage has been provided with default values:
+## Usage
+> [!IMPORTANT]  
+> The trace file must use raw data values (e.g. duration recorded in ms) in a CSV format. Please set `trace.raw = true` and `trace.sep = ','` in your `nextflow.config`. In addition to the standard fields, `start`, `complete`, `cpus`, `memory`, `process` and `hostname` must be added to the trace file.
+>
+> Example entry in `nextflow.config`: 
+> ```config
+>  trace {
+>      raw = true
+>      sep = ','
+>      fields = ['task_id', 'hash', 'native_id', 'name', 'status', 'exit', 'submit', 'duration', 'realtime', '%cpu', 'peak_rss', 'peak_vmem', 'rchar', 'wchar', 'start', 'complete', 'cpus', 'memory', 'process', 'hostname']
+>  }
+> ```
+Now move the trace files to [data trace](data/trace/). You can run the carbon footprint estimation through config file defined values run 
 ```
-$ python -m src.scripts.IchnosCF <trace-name> <ci-value|ci-file-name> <power_model> <? interval=60> <? pue=1.0> <? memory-coeff=0.392>
-$ python3 -m src.scripts.IchnosCF ampliseq-1 uk-marg-010125-110225 gpg_15_powersave_linear 5 1.0 0.392
-```      
-
-> **Note**  
-> The trace file name must be the file name only, and traces should be csv files stored in the [data trace](data/trace/) directory!
-
-> **Note**  
-> The trace file must use raw data values, e.g. duration recorded in ms, this is possible by using the trace.raw flag when executing a nextflow workflow. 
+uv run python -m src.scripts.IchnosCF -c config.yaml
+```
 
 # Output
 The script will produce two files. If the trace file name was 'test', then 'test-trace.csv' would produce a csv file of Carbon Records with energy consumption (inc. PUE) and carbon footprint for each task in the trace file. The 'test-summary.txt' file will contain details around the provided parameters (e.g. CI, PUE) and the overall energy, memory and carbon footprint.     
