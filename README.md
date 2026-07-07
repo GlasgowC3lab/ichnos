@@ -29,25 +29,6 @@ westkath@misool:~/code/carbon-footprint$ python3 -m src.scripts.Convertor nf-ran
 westkath@misool:~/code/carbon-footprint$ python3 -m src.scripts.Convertor nf-rangeland-21-1.txt + 6 0 \;
 ```
 
-## 📖 Publications
-
-If you use Ichnos in your research, please cite our paper:
-
-Kathleen West, Magnus Reid, Yehia Elkhatib and Lauritz Thamsen. "[Ichnos: A Carbon Footprint Estimator for Scientific Workflows](https://arxiv.org/abs/2411.12456)" Full Workshop Paper for *1st International Workshop on Low Carbon Computing (LOCO24)*. 2024
-
-Bibtex:
-```
-@misc{west2025ichnoscarbonfootprintestimator,
-      title={Ichnos: A Carbon Footprint Estimator for Scientific Workflows}, 
-      author={Kathleen West and Magnus Reid and Yehia Elkhatib and Lauritz Thamsen},
-      year={2025},
-      eprint={2411.12456},
-      archivePrefix={arXiv},
-      primaryClass={cs.DC},
-      url={https://arxiv.org/abs/2411.12456}, 
-}
-```
-
 Results and evaluation repository is available [ichnos-results-evaluation](https://github.com/GlasgowC3lab/ichnos-results-evaluation).
 
 ## Credits
