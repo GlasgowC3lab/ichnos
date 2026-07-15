@@ -1,3 +1,4 @@
+import json
 import logging
 from typing import Dict, List, Tuple, Union
 from src.utils.TimeUtils import to_timestamp, extract_tasks_by_interval
@@ -14,6 +15,35 @@ from src.models.TaskExtractionResult import TaskExtractionResult
 
 import sys
 
+
+logger = logging.getLogger(__name__)
+
+
+def normalize_node_governors(value) -> Dict[str, str]:
+    if value is None:
+        return {}
+    if isinstance(value, str):
+        try:
+            with open(value, "r", encoding="utf-8") as handle:
+                value = json.load(handle)
+        except Exception as exc:
+            logger.warning("Ignoring node-governors from %s: %s", value, exc)
+            return {}
+    if not isinstance(value, dict):
+        logger.warning("Ignoring node-governors: expected a mapping or JSON file path, got %s", type(value).__name__)
+        return {}
+    normalized: Dict[str, str] = {}
+    for node, governor in value.items():
+        if isinstance(governor, dict):
+            governor = governor.get("dominant_governor") or governor.get("governor")
+        node_text = str(node).strip()
+        governor_text = str(governor).strip() if governor is not None else ""
+        if node_text and governor_text:
+            normalized[node_text] = governor_text
+        else:
+            logger.warning("Ignoring empty node governor entry for node %r", node)
+    return normalized
+
 def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     """
     Main function to compute and report the carbon footprint.
@@ -28,6 +58,7 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     interval: int = arguments[INTERVAL]
     model_name: str = arguments[MODEL_NAME]
     memory_coefficient: float = arguments[MEMORY_COEFFICIENT]
+    node_governors: Dict[str, str] = normalize_node_governors(arguments.get(NODE_GOVERNORS))
 
     if memory_coefficient is None:
         memory_coefficient = DEFAULT_MEMORY_POWER_DRAW
@@ -52,6 +83,8 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
     summary += f"- carbon-intensity: {arguments[CI]}\n"
     summary += f"- power-usage-effectiveness: {pue}\n"
     summary += f"- power model selected: {model_name}\n"
+    if node_governors:
+        summary += f"- node governors: {json.dumps(node_governors, sort_keys=True)}\n"
     summary += f"- memory-power-draw: {memory_coefficient}\n"
 
     if isinstance(arguments[CI], float):
@@ -95,7 +128,8 @@ def main(arguments: Dict[str, Union[str, float, int]]) -> IchnosResult:
         ewif=ewif, 
         wue=wue, 
         elif_=elif_, 
-        lue=lue
+        lue=lue,
+        node_governors=node_governors
     )
     cpu_energy = op_carbon_result.cpu_energy
     cpu_energy_pue = op_carbon_result.cpu_energy_pue

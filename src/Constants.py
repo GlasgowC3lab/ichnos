@@ -29,6 +29,7 @@ RESERVED_MEMORY = "reserved-memory"
 NUM_OF_NODES = "num-of-nodes"
 TASK_FLAG = True
 MODEL_NAME = 'model-name' 
+NODE_GOVERNORS = "node-governors"
 
 # FetchCarbonIntensity Constants
 NG_BASE_URL = "https://api.carbonintensity.org.uk/"
