@@ -55,6 +55,13 @@ westkath@misool:~/code/carbon-footprint$ python3 -m src.scripts.Convertor nf-ran
 
 Results and evaluation repository is available [ichnos-results-evaluation](https://github.com/GlasgowC3lab/ichnos-results-evaluation).
 
+# More Information
+View more information about Ichnos+ here: ["Ichnos+: Estimating the Carbon Footprint of Scientific Workflows Using Fitted Power Models
+"](https://arxiv.org/abs/2607.10586).
+
+An initial version of Ichnos was released and discussed here: ["Ichnos: A Carbon Footprint Estimator for Scientific Workflows"](https://arxiv.org/abs/2411.12456).
+
+
 ## Credits
 - [Carbon Footprint](src/scripts/CarbonFootprint.py) is adapted from the [nf-co2footprint](https://github.com/nextflow-io/nf-co2footprint) plugin which was based on the carbon footprint computation method developed in the [Green Algorithms](https://www.green-algorithms.org/) project. 
   > **Green Algorithms: Quantifying the Carbon Footprint of Computation.**
